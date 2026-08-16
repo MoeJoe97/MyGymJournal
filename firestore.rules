@@ -1,0 +1,218 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        )
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.admin == true;
+    }
+
+    function validUserProfileData() {
+      return request.resource.data.keys().hasOnly([
+        'admin',
+        'nickname',
+        'email',
+        'address',
+        'street',
+        'postalCode',
+        'city',
+        'country',
+        'birthDate',
+        'createdAt',
+        'updatedAt'
+      ])
+      && request.resource.data.admin is bool
+      && request.resource.data.nickname is string
+      && request.resource.data.nickname.size() > 0
+      && request.resource.data.nickname.size() <= 80
+      && request.resource.data.email is string
+      && request.resource.data.email.size() <= 320
+      && request.resource.data.address is string
+      && request.resource.data.address.size() <= 500
+      && request.resource.data.street is string
+      && request.resource.data.street.size() <= 200
+      && request.resource.data.postalCode is string
+      && request.resource.data.postalCode.size() <= 32
+      && request.resource.data.city is string
+      && request.resource.data.city.size() <= 120
+      && request.resource.data.country is string
+      && request.resource.data.country.size() <= 120
+      && request.resource.data.birthDate is string
+      && request.resource.data.birthDate.size() <= 20;
+    }
+
+    function validExerciseData() {
+      return request.resource.data.keys().hasOnly([
+        'name',
+        'updatedAt'
+      ])
+      && request.resource.data.name is string
+      && request.resource.data.name.size() > 0
+      && request.resource.data.name.size() <= 120;
+    }
+
+    function validBodyWeightData() {
+      return request.resource.data.keys().hasOnly([
+        'weight',
+        'dayKey',
+        'timestamp',
+        'updatedAt'
+      ])
+      && request.resource.data.weight is number
+      && request.resource.data.weight > 0
+      && request.resource.data.weight <= 1000
+      && request.resource.data.dayKey is string
+      && request.resource.data.dayKey.matches(
+        '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+      )
+      && request.resource.data.timestamp is timestamp;
+    }
+
+    function validWorkoutData() {
+      return request.resource.data.keys().hasOnly([
+        'userId',
+        'exercise',
+        'exerciseDisplay',
+        'repetitions',
+        'weight',
+        'setNumber',
+        'dayKey',
+        'rpe',
+        'e1RM',
+        'intensityVolume',
+        'timestamp',
+        'updatedAt'
+      ])
+      && request.resource.data.userId is string
+      && request.resource.data.exercise is string
+      && request.resource.data.exercise.size() > 0
+      && request.resource.data.exercise.size() <= 120
+      && request.resource.data.exerciseDisplay is string
+      && request.resource.data.exerciseDisplay.size() > 0
+      && request.resource.data.exerciseDisplay.size() <= 120
+      && request.resource.data.repetitions is number
+      && request.resource.data.repetitions > 0
+      && request.resource.data.repetitions <= 1000
+      && request.resource.data.weight is number
+      && request.resource.data.weight > 0
+      && request.resource.data.weight <= 10000
+      && request.resource.data.setNumber is number
+      && request.resource.data.setNumber > 0
+      && request.resource.data.setNumber <= 1000
+      && request.resource.data.dayKey is string
+      && request.resource.data.dayKey.matches(
+        '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+      )
+      && request.resource.data.rpe is number
+      && request.resource.data.rpe >= 0
+      && request.resource.data.rpe <= 10
+      && request.resource.data.e1RM is number
+      && request.resource.data.e1RM > 0
+      && request.resource.data.e1RM <= 100000
+      && request.resource.data.intensityVolume is number
+      && request.resource.data.intensityVolume >= 0
+      && request.resource.data.timestamp is timestamp;
+    }
+
+    // ================= USERS =================
+
+    match /users/{userId} {
+
+      // Administrators may manage user documents.
+      allow read, write: if isAdmin();
+
+      // Users may read their own profile.
+      allow read: if isOwner(userId);
+
+      // Users may create their own profile, but never as administrator.
+      allow create: if isOwner(userId)
+        && validUserProfileData()
+        && request.resource.data.admin == false
+        && request.resource.data.email == request.auth.token.email;
+
+      // Users may update their own profile without changing admin or email.
+      allow update: if isOwner(userId)
+        && validUserProfileData()
+        && request.resource.data.admin == resource.data.admin
+        && request.resource.data.admin == false
+        && request.resource.data.email == request.auth.token.email;
+
+      // Users may delete their own profile.
+      allow delete: if isOwner(userId);
+
+      // ================ USER EXERCISES ================
+
+      match /exercises/{exerciseId} {
+        allow read: if isOwner(userId) || isAdmin();
+
+        allow create, update: if
+          (isOwner(userId) || isAdmin())
+          && validExerciseData();
+
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      // ================ BODY WEIGHTS ================
+
+      match /bodyWeights/{weightEntryId} {
+        allow read: if isOwner(userId) || isAdmin();
+
+        allow create, update: if
+          (isOwner(userId) || isAdmin())
+          && validBodyWeightData();
+
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ================= WORKOUTS =================
+
+    match /workouts/{workoutId} {
+
+      allow read: if isAdmin()
+        || (
+          isAuthenticated()
+          && request.auth.uid == resource.data.userId
+        );
+
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && validWorkoutData();
+
+      allow update: if isAdmin()
+        || (
+          isAuthenticated()
+          && request.auth.uid == resource.data.userId
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.exercise == resource.data.exercise
+          && validWorkoutData()
+        );
+
+      allow delete: if isAdmin()
+        || (
+          isAuthenticated()
+          && request.auth.uid == resource.data.userId
+        );
+    }
+
+    // ================= DEFAULT =================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
