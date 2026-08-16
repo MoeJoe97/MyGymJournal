@@ -1,0 +1,1541 @@
+:root{
+                           --bg: #000000;
+                           --surface: #0b0c0f;
+                           --surface-2: #11131a;
+                           --border: rgba(255,255,255,0.08);
+                           --text: rgba(255,255,255,0.92);
+                           --muted: rgba(255,255,255,0.62);
+                           --muted-2: rgba(255,255,255,0.40);
+                           --accent: #00d084;
+                           --danger: #ff4d4d;
+                           --warning: #ffb020;
+                           --radius: 18px;
+                           --shadow: 0 12px 30px rgba(0,0,0,0.55);
+                           --shadow-soft: 0 10px 20px rgba(0,0,0,0.35);
+                           }
+                           * { box-sizing: border-box; }
+                           html, body { height: 100%; }
+                           body {
+                           margin: 0;
+                           font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", Helvetica, "Noto Sans", "Liberation Sans", sans-serif;
+                           background: var(--bg);
+                           color: var(--text);
+                           -webkit-font-smoothing: antialiased;
+                           -moz-osx-font-smoothing: grayscale;
+                           }
+                           .app {
+                           min-height: 100%;
+                           display: flex;
+                           flex-direction: column;
+                           }
+                           .topbar {
+                           position: sticky;
+                           top: 0;
+                           z-index: 20;
+                           background: rgba(0,0,0,0.85);
+                           backdrop-filter: blur(10px);
+                           border-bottom: 1px solid var(--border);
+                           }
+                           .topbar-inner {
+                           display: flex;
+                           align-items: center;
+                           justify-content: space-between;
+                           padding: 16px 18px;
+                           max-width: 1100px;
+                           margin: 0 auto;
+                           }
+                           .brand {
+                           display: flex;
+                           align-items: baseline;
+                           gap: 10px;
+                           }
+                           .brand h1 {
+                           margin: 0;
+                           font-size: 18px;
+                           letter-spacing: 0.2px;
+                           font-weight: 700;
+                           }
+                           .brand .tagline {
+                           font-size: 12px;
+                           color: var(--muted);
+                           }
+                           .menu-btn {
+                           appearance: none;
+                           border: none;
+                           background: transparent;
+                           color: var(--text);
+                           cursor: pointer;
+                           padding: 10px;
+                           border-radius: 999px;
+                           display: inline-flex;
+                           align-items: center;
+                           justify-content: center;
+                           }
+                           .menu-btn:hover {
+                           background: rgba(255,255,255,0.06);
+                           }
+                           .hamburger {
+                           width: 22px;
+                           height: 14px;
+                           position: relative;
+                           }
+                           .hamburger span {
+                           position: absolute;
+                           left: 0;
+                           right: 0;
+                           height: 2px;
+                           background: rgba(255,255,255,0.85);
+                           border-radius: 99px;
+                           }
+                           .hamburger span:nth-child(1){ top: 0; }
+                           .hamburger span:nth-child(2){ top: 6px; opacity: 0.85; }
+                           .hamburger span:nth-child(3){ bottom: 0; opacity: 0.75; }
+                           .tabs {
+                           max-width: 1100px;
+                           margin: 0 auto;
+                           padding: 14px 18px 8px 18px;
+                           display: flex;
+                           gap: 14px;
+                           border-bottom: 1px solid var(--border);
+                           }
+                           .tab-link {
+                           appearance: none;
+                           border: none;
+                           background: transparent;
+                           cursor: pointer;
+                           padding: 8px 0;
+                           color: var(--muted);
+                           font-size: 14px;
+                           letter-spacing: 0.2px;
+                           position: relative;
+                           }
+                           .tab-link.active {
+                           color: var(--text);
+                           }
+                           .tab-link.active::after{
+                           content: "";
+                           position: absolute;
+                           left: 0;
+                           right: 0;
+                           bottom: -9px;
+                           height: 2px;
+                           background: var(--accent);
+                           border-radius: 99px;
+                           }
+                           .content {
+                           flex: 1;
+                           max-width: 1100px;
+                           margin: 0 auto;
+                           padding: 18px;
+                           width: 100%;
+                           }
+                           .card {
+                           background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+                           border: 1px solid var(--border);
+                           border-radius: var(--radius);
+                           box-shadow: var(--shadow-soft);
+                           padding: 16px;
+                           }
+                           h2, h3 {
+                           margin: 0 0 10px 0;
+                           font-size: 14px;
+                           color: var(--muted);
+                           font-weight: 700;
+                           letter-spacing: 0.3px;
+                           text-transform: uppercase;
+                           }
+                           .headline {
+                           margin: 0 0 6px 0;
+                           font-size: 16px;
+                           color: var(--text);
+                           font-weight: 700;
+                           letter-spacing: 0.2px;
+                           }
+                           .subtle {
+                           color: var(--muted);
+                           font-size: 13px;
+                           line-height: 1.4;
+                           margin: 0;
+                           }
+                           label {
+                           display: block;
+                           font-size: 12px;
+                           color: var(--muted);
+                           margin: 10px 0 6px 0;
+                           }
+                           input[type="email"], input[type="password"],
+                           input[type="text"], input[type="number"],
+                           select {
+                           width: 100%;
+                           padding: 11px 12px;
+                           border-radius: 12px;
+                           border: 1px solid rgba(255,255,255,0.10);
+                           background: rgba(255,255,255,0.04);
+                           color: var(--text);
+                           outline: none;
+                           }
+                           input::placeholder { color: rgba(255,255,255,0.35); }
+                           select option { color: #000; }
+                           input:focus, select:focus {
+                           border-color: rgba(0,208,132,0.55);
+                           box-shadow: 0 0 0 3px rgba(0,208,132,0.10);
+                           }
+                           .actions {
+                           display: flex;
+                           flex-wrap: wrap;
+                           gap: 12px;
+                           align-items: center;
+                           margin-top: 10px;
+                           }
+                           button.link-btn {
+                           appearance: none;
+                           border: none;
+                           background: transparent;
+                           padding: 0;
+                           margin: 0;
+                           cursor: pointer;
+                           color: var(--text);
+                           font-size: 14px;
+                           letter-spacing: 0.2px;
+                           }
+                           button.link-btn:hover {
+                           text-decoration: underline;
+                           text-underline-offset: 4px;
+                           }
+                           button.link-btn.accent {
+                           color: var(--accent);
+                           font-weight: 700;
+                           }
+                           button.link-btn.danger {
+                           color: var(--danger);
+                           font-weight: 700;
+                           }
+                           button.link-btn.muted {
+                           color: var(--muted);
+                           }
+                           button.link-btn.saving {
+                           color: var(--muted-2) !important;
+                           cursor: default !important;
+                           pointer-events: none !important;
+                           text-decoration: none !important;
+                           }
+                           /* Range filters as TEXT LINKS, left aligned. */
+                           #rangeFilter,
+                           #progressRangeFilter {
+                           display: flex;
+                           justify-content: flex-start;
+                           gap: 14px;
+                           margin: 10px 0 14px 0;
+                           flex-wrap: wrap;
+                           }
+                           .range-btn {
+                           appearance: none;
+                           border: none;
+                           background: transparent;
+                           padding: 0;
+                           cursor: pointer;
+                           color: var(--muted);
+                           font-size: 14px;
+                           letter-spacing: 0.2px;
+                           text-decoration: none;
+                           }
+                           .range-btn:hover {
+                           text-decoration: underline;
+                           text-underline-offset: 4px;
+                           }
+                           .range-btn.active {
+                           color: var(--text);
+                           font-weight: 800;
+                           text-decoration: none;
+                           position: relative;
+                           }
+                           .range-btn.active::after {
+                           content: "";
+                           position: absolute;
+                           left: 0;
+                           right: 0;
+                           bottom: -6px;
+                           height: 2px;
+                           background: var(--accent);
+                           border-radius: 99px;
+                           opacity: 0.9;
+                           }
+                           .exercise-list {
+                           list-style: none;
+                           padding: 0;
+                           margin: 12px 0 0 0;
+                           display: grid;
+                           gap: 10px;
+                           }
+                           .exercise-row {
+                           display: flex;
+                           align-items: center;
+                           justify-content: space-between;
+                           gap: 10px;
+                           border: 1px solid var(--border);
+                           background: rgba(255,255,255,0.03);
+                           border-radius: 14px;
+                           padding: 12px 12px;
+                           cursor: pointer;
+                           user-select: none;
+                           }
+                           #exerciseLogView .exercise-row {
+                           cursor: default;
+                           }
+                           .exercise-row:hover {
+                           border-color: rgba(255,255,255,0.16);
+                           background: rgba(255,255,255,0.05);
+                           }
+                           .exercise-name {
+                           font-size: 14px;
+                           color: var(--text);
+                           text-transform: uppercase;
+                           }
+                           .exercise-metric {
+                           font-size: 13px;
+                           color: var(--muted);
+                           white-space: nowrap;
+                           }
+                           .exercise-metric.pos { color: rgba(0,208,132,0.95); }
+                           .exercise-metric.neg { color: rgba(255,77,77,0.90); }
+
+      .chart-row {
+                           display: flex;
+                           gap: 10px;
+                           align-items: center;
+                           flex-wrap: wrap;
+                           margin: 10px 0;
+                           }
+                           .chart-row select {
+                           width: auto;
+                           max-width: 240px;
+                           }
+                           #progressExerciseSelect {
+                           min-width: 180px;
+                           }
+                           #message {
+                           margin-top: 16px;
+                           padding: 12px 14px;
+                           border-radius: 14px;
+                           border: 1px solid var(--border);
+                           background: rgba(255,255,255,0.04);
+                           color: var(--muted);
+                           font-size: 13px;
+                           }
+                           #message.error {
+                           border-color: rgba(255,77,77,0.35);
+                           background: rgba(255,77,77,0.08);
+                           color: rgba(255,255,255,0.86);
+                           }
+                           #message.success {
+                           border-color: rgba(0,208,132,0.35);
+                           background: rgba(0,208,132,0.08);
+                           color: rgba(255,255,255,0.88);
+                           }
+      #message { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; max-height: 0 !important; overflow: hidden !important; }
+      .overlay {
+                           position: fixed;
+                           inset: 0;
+                           background: rgba(0,0,0,0.55);
+                           backdrop-filter: blur(4px);
+                           opacity: 0;
+                           pointer-events: none;
+                           transition: opacity 180ms ease;
+                           z-index: 50;
+                           }
+                           .overlay.open {
+                           opacity: 1;
+                           pointer-events: auto;
+                           }
+                           .drawer {
+                           position: fixed;
+                           top: 0;
+                           right: 0;
+                           height: 100%;
+                           width: min(380px, 88vw);
+                           background: rgba(8,9,12,0.95);
+                           border-left: 1px solid var(--border);
+                           box-shadow: var(--shadow);
+                           transform: translateX(105%);
+                           transition: transform 220ms ease;
+                           z-index: 60;
+                           display: flex;
+                           flex-direction: column;
+                           }
+                           .drawer.open {
+                           transform: translateX(0);
+                           }
+                           .drawer-header {
+                           padding: 16px 16px 10px 16px;
+                           border-bottom: 1px solid var(--border);
+                           display: flex;
+                           align-items: center;
+                           justify-content: space-between;
+                           gap: 10px;
+                           }
+                           .drawer-title {
+                           font-size: 14px;
+                           font-weight: 800;
+                           letter-spacing: 0.3px;
+                           }
+                           .drawer-body {
+                           padding: 14px 16px;
+                           overflow: auto;
+                           }
+                           .menu-list {
+                           display: grid;
+                           gap: 10px;
+                           margin: 0 0 14px 0;
+                           padding: 0;
+                           list-style: none;
+                           }
+                           .menu-item {
+                           display: flex;
+                           align-items: center;
+                           justify-content: space-between;
+                           padding: 12px 12px;
+                           border-radius: 14px;
+                           border: 1px solid var(--border);
+                           background: rgba(255,255,255,0.03);
+                           cursor: pointer;
+                           user-select: none;
+                           color: var(--text);
+                           font-size: 14px;
+                           }
+                           .menu-item:hover {
+                           border-color: rgba(255,255,255,0.16);
+                           background: rgba(255,255,255,0.05);
+                           }
+                           .pill {
+                           font-size: 11px;
+                           padding: 4px 8px;
+                           border-radius: 999px;
+                           border: 1px solid rgba(255,255,255,0.12);
+                           color: var(--muted);
+                           }
+                           .view { display: none; }
+                           .view.active { display: block; }
+                           .login-hint {
+                           border: 1px dashed rgba(255,255,255,0.16);
+                           border-radius: var(--radius);
+                           padding: 14px;
+                           color: var(--muted);
+                           background: rgba(255,255,255,0.02);
+                           }
+                           .fab-bar {
+                           position: fixed;
+                           left: 18px;
+                           right: 18px;
+                           bottom: 18px;
+                           z-index: 40;
+                           display: flex;
+                           justify-content: space-between;
+                           pointer-events: none;
+                           }
+                           .fab {
+                           pointer-events: auto;
+                           border: none;
+                           cursor: pointer;
+                           background: #ffffff;
+                           color: #000000;
+                           padding: 12px 18px;
+                           border-radius: 999px;
+                           font-weight: 800;
+                           letter-spacing: 0.2px;
+                           box-shadow: 0 10px 26px rgba(0,0,0,0.55);
+                           }
+                           .fab:hover {
+                           filter: brightness(0.96);
+                           }
+                           .fab:active {
+                           transform: translateY(1px);
+                           }
+                           .modal {
+                           position: fixed;
+                           inset: 0;
+                           z-index: 70;
+                           display: none;
+                           }
+                           .modal.open {
+                           display: block;
+                           }
+                           .modal-overlay {
+                           position: absolute;
+                           inset: 0;
+                           background: rgba(0,0,0,0.65);
+                           backdrop-filter: blur(6px);
+                           }
+                           .modal-panel {
+                           position: absolute;
+                           left: 50%;
+                           top: 50%;
+                           transform: translate(-50%, -50%);
+                           width: min(520px, 92vw);
+                           background: rgba(8,9,12,0.96);
+                           border: 1px solid var(--border);
+                           border-radius: var(--radius);
+                           box-shadow: var(--shadow);
+                           padding: 16px;
+                           }
+                           .modal-header {
+                           display: flex;
+                           justify-content: space-between;
+                           align-items: center;
+                           gap: 10px;
+                           margin-bottom: 6px;
+                           }
+                           .modal-title {
+                           font-size: 14px;
+                           font-weight: 900;
+                           letter-spacing: 0.3px;
+                           }
+                           .modal-close {
+                           appearance: none;
+                           border: none;
+                           background: transparent;
+                           color: var(--muted);
+                           cursor: pointer;
+                           font-size: 14px;
+                           padding: 6px 8px;
+                           }
+                           .modal-close:hover {
+                           text-decoration: underline;
+                           text-underline-offset: 4px;
+                           }
+                           .exercises-header {
+                           display: flex;
+                           align-items: center;
+                           justify-content: space-between;
+                           gap: 12px;
+                           margin-top: 18px;
+                           }
+                           .search-input {
+                           width: 180px;
+                           max-width: 45vw;
+                           padding: 9px 10px;
+                           border-radius: 999px;
+                           border: 1px solid rgba(255,255,255,0.10);
+                           background: rgba(255,255,255,0.04);
+                           color: var(--text);
+                           outline: none;
+                           font-size: 13px;
+                           }
+                           .search-input::placeholder {
+                           color: rgba(255,255,255,0.35);
+                           }
+                           .search-input:focus {
+                           border-color: rgba(0,208,132,0.55);
+                           box-shadow: 0 0 0 3px rgba(0,208,132,0.10);
+                           }
+                           .sort-wrap {
+                           display: flex;
+                           align-items: center;
+                           gap: 12px;
+                           position: relative;
+                           }
+                           .sort-menu {
+                           position: absolute;
+                           top: 32px;
+                           left: 0;
+                           min-width: 240px;
+                           background: rgba(8,9,12,0.98);
+                           border: 1px solid var(--border);
+                           border-radius: 14px;
+                           box-shadow: var(--shadow-soft);
+                           padding: 8px;
+                           display: none;
+                           z-index: 80;
+                           }
+                           .sort-menu.open { display: block; }
+                           .sort-item {
+                           width: 100%;
+                           text-align: left;
+                           padding: 10px 10px;
+                           border-radius: 12px;
+                           border: 1px solid transparent;
+                           background: transparent;
+                           color: var(--text);
+                           cursor: pointer;
+                           font-size: 14px;
+                           }
+                           .sort-item:hover {
+                           background: rgba(255,255,255,0.05);
+                           border-color: rgba(255,255,255,0.10);
+                           }
+                           .sort-item.active {
+                           background: rgba(0,208,132,0.10);
+                           border-color: rgba(0,208,132,0.25);
+                           }
+                           .sets-meta {
+                           display: flex;
+                           gap: 10px;
+                           flex-wrap: wrap;
+                           align-items: baseline;
+                           margin-top: 10px;
+                           color: var(--muted);
+                           font-size: 13px;
+                           }
+                           .sets-meta b {
+                           color: rgba(255,255,255,0.88);
+                           }
+                           .login-overlay {
+                           position: fixed;
+                           inset: 0;
+                           z-index: 999;
+                           background: rgba(0,0,0,0.75);
+                           backdrop-filter: blur(6px);
+                           display: flex;
+                           align-items: center;
+                           justify-content: center;
+                           }
+                           .login-overlay.hidden {
+                           display: none;
+                           }
+                           .login-panel {
+                           width: min(420px, 92vw);
+                           background: rgba(8,9,12,0.96);
+                           border: 1px solid var(--border);
+                           border-radius: var(--radius);
+                           padding: 20px;
+                           box-shadow: var(--shadow);
+                           max-height: 90vh;
+                           overflow-y: auto;
+                           -webkit-overflow-scrolling: touch;
+                           }
+                           .login-panel h2 {
+                           margin: 0 0 10px 0;
+                           }
+                           .login-panel p {
+                           margin: 0 0 14px 0;
+                           color: var(--muted);
+                           }
+                           .login-panel input {
+                           width: 100%;
+                           margin-bottom: 10px;
+                           }
+                           .login-actions {
+                           display: flex;
+                           justify-content: space-between;
+                           align-items: center;
+                           gap: 12px;
+                           margin-top: 10px;
+                           }
+                           .login-actions .link-btn {
+                           order: 1;   /* links */
+                           }
+                           .login-actions .accent-btn {
+                           order: 2;   /* rechts */
+                           }
+                           .accent-btn {
+                           background: var(--accent);
+                           color: #000;
+                           border: none;
+                           padding: 10px 16px;
+                           border-radius: 999px;
+                           font-weight: 800;
+                           cursor: pointer;
+                           }
+                           /* ============================
+                           iOS Input Zoom Fix
+                           ============================ */
+                           input,
+                           select,
+                           textarea,
+                           button {
+                           font-size: 16px;
+                           }
+                           /* ============================
+                           iOS Zoom Fix – Exercise Search
+                           ============================ */
+                           #exerciseSearch {
+                           font-size: 16px !important;
+                           line-height: 1.2;
+                           }
+                           /* ============================
+                           Create Modal – Button Layout
+                           ============================ */
+                           #createModal .actions {
+                           display: flex;
+                           justify-content: space-between;
+                           align-items: center;
+                           }
+                           #createSaveButton {
+                           order: 1;
+                           }
+                           #createCancelButton {
+                           order: 2;
+                           }
+                           /* ============================
+                           Edit Modal – Button Layout
+                           ============================ */
+                           #editWorkoutModal .actions {
+                           display: flex;
+                           justify-content: space-between;
+                           align-items: center;
+                           }
+                           /* ============================
+                           Mobile FAB Buttons – Centered
+                           ============================ */
+                           .fab-bar {
+                           justify-content: center;
+                           gap: 14px;
+                           padding-left: 18px;
+                           padding-right: 18px;
+                           padding-bottom: 30px;
+                           }
+                           .fab {
+                           flex: 1;
+                           max-width: 46%;
+                           text-align: center;
+                           padding: 16px 0;
+                           border-radius: 14px; /* eckiger als vorher */
+                           }
+                           /* ============================
+                           Exercise Search Dropdown
+                           ============================ */
+                           .exercise-dropdown {
+                           position: relative;
+                           width: 100%;
+                           max-width: 280px;
+                           }
+                           .exercise-dropdown input {
+                           font-size: 16px;
+                           width: 100%;
+                           padding: 10px 12px;
+                           border-radius: 12px;
+                           border: 1px solid rgba(255,255,255,0.15);
+                           background: rgba(255,255,255,0.04);
+                           color: var(--text);
+                           text-transform: uppercase;
+                           }
+                           .exercise-dropdown-list {
+                           position: absolute;
+                           top: calc(100% + 6px);
+                           left: 0;
+                           right: 0;
+                           max-height: 200px;
+                           overflow-y: auto;
+                           background: rgba(8,9,12,0.98);
+                           border: 1px solid var(--border);
+                           border-radius: 12px;
+                           list-style: none;
+                           padding: 4px;
+                           margin: 0;
+                           z-index: 100;
+                           display: none;
+                           }
+                           .exercise-dropdown-list li {
+                           padding: 8px 10px;
+                           border-radius: 10px;
+                           cursor: pointer;
+                           text-transform: uppercase;
+                           }
+                           .exercise-dropdown-list li:hover {
+                           background: rgba(255,255,255,0.06);
+                           }
+                           /* ============================
+                           Exercise Log Bottom Sheet
+                           ============================ */
+                           .sheet {
+                           position: fixed;
+                           inset: 0;
+                           background: rgba(8,9,12,0.96);
+                           z-index: 1000;
+                           transform: translateY(100%);
+                           transition: transform 280ms cubic-bezier(.22,.61,.36,1);
+                           display: flex;
+                           flex-direction: column;
+                           }
+                           .sheet.open {
+                           transform: translateY(0);
+                           }
+                           /* ===== Mobile DEFAULT ===== */
+                           /* Fullscreen, Swipe-Handle sichtbar, kein Close-Button */
+                           .sheet-handle {
+                           width: 42px;
+                           height: 5px;
+                           background: rgba(255,255,255,0.9);
+                           border-radius: 999px;
+                           margin: 10px auto 6px auto;
+                           }
+                           #closeExerciseLogBtn {
+                           display: none;
+                           }
+                           /* Header */
+                           .sheet-header {
+                           display: flex;
+                           justify-content: space-between;
+                           align-items: center;
+                           padding: 12px 16px;
+                           border-bottom: 1px solid var(--border);
+                           }
+                           /* Content */
+                           .sheet-body {
+                           flex: 1;
+                           overflow-y: auto;
+                           padding: 14px 16px;
+                           }
+                           /* ===== Laptop / PC (Option B) ===== */
+                           /* Fullscreen, kein Handle, Close-Button sichtbar */
+                           @media (min-width: 768px) {
+                           .sheet {
+                           inset: 0;
+                           border-radius: 0;
+                           }
+                           .sheet-handle {
+                           display: none;
+                           }
+                           #closeExerciseLogBtn {
+                           display: inline-flex;
+                           }
+                           }
+                           /* ============================
+                           Exercise Log – Entry Layout
+                           ============================ */
+                           .exercise-log-row {
+                           display: flex;
+                           align-items: center;
+                           justify-content: space-between;
+                           gap: 12px;
+                           padding: 12px;
+                           border: 1px solid var(--border);
+                           border-radius: 14px;
+                           background: rgba(255,255,255,0.03);
+                           }
+                           .exercise-log-content {
+                           display: flex;
+                           align-items: center;
+                           gap: 12px;
+                           white-space: nowrap;
+                           }
+                           .exercise-log-date {
+                           font-size: 12px;
+                           color: var(--muted);
+                           }
+                           .exercise-log-name {
+                           font-size: 14px;
+                           font-weight: 700;
+                           letter-spacing: 0.4px;
+                           }
+                           .exercise-log-meta {
+                           font-size: 13px;
+                           color: var(--muted);
+                           }
+                           .exercise-log-arrow {
+                           font-size: 18px;
+                           font-weight: 700;
+                           color: var(--muted);
+                           cursor: pointer;
+                           user-select: none;
+                           }
+                           .exercise-log-arrow:hover {
+                           color: var(--text);
+                           }
+                           /* ============================
+                           Exercise Log – Mobile Layout
+                           ============================ */
+                           @media (max-width: 640px) {
+                           .exercise-log-row {
+                           align-items: flex-start;
+                           }
+                           /* 👉 Textblock bewusst nach rechts schieben */
+                           .exercise-log-content {
+                           display: flex;
+                           flex-direction: column;
+                           gap: 4px;
+                           white-space: normal;
+                           flex: 1;
+                           margin-left: 14px;   /* 🔥 DAS ist die Verschiebung */
+                           }
+                           .exercise-log-header {
+                           display: flex;
+                           gap: 10px;
+                           flex-wrap: wrap;
+                           }
+                           .exercise-log-meta {
+                           font-size: 13px;
+                           color: var(--muted);
+                           }
+                           /* Pfeil bleibt ganz rechts */
+                           .exercise-log-arrow {
+                           margin-left: auto;
+                           padding-left: 8px;
+                           line-height: 1;
+                           align-self: center;
+                           }
+                           }
+                           /* ============================
+                           MOBILE: FLAT LAYOUT
+                           ============================ */
+                           @media (max-width: 640px) {
+                           /* Allgemein weniger Padding */
+                           .content {
+                           padding: 12px;
+                           }
+                           /* Cards komplett auflösen */
+                           .card {
+                           background: transparent;
+                           border: none;
+                           border-radius: 0;
+                           box-shadow: none;
+                           padding: 0;
+                           margin-bottom: 18px;
+                           }
+                           /* Exercise List – keine Kästen */
+                           .exercise-row {
+                           background: transparent;
+                           border: none;
+                           border-radius: 0;
+                           padding: 10px 0;
+                           }
+                           /* Statt Kasten: feine Linie */
+                           .exercise-row:not(:last-child) {
+                           border-bottom: 1px solid rgba(255,255,255,0.08);
+                           }
+                           /* Menu Items im Drawer */
+                           .menu-item {
+                           background: transparent;
+                           border: none;
+                           border-radius: 0;
+                           padding: 12px 0;
+                           }
+                           .menu-item:not(:last-child) {
+                           border-bottom: 1px solid rgba(255,255,255,0.08);
+                           }
+                           /* Exercise Log Einträge */
+                           .exercise-log-row {
+                           background: transparent;
+                           border: none;
+                           border-radius: 0;
+                           padding: 12px 0;
+                           }
+                           .exercise-log-row:not(:last-child) {
+                           border-bottom: 1px solid rgba(255,255,255,0.08);
+                           }
+                           /* Login Hint flacher */
+                           .login-hint {
+                           background: rgba(255,255,255,0.03);
+                           border: none;
+                           border-radius: 12px;
+                           }
+                           /* Sets Meta Line weniger „boxed“ */
+                           .sets-meta {
+                           border: none;
+                           padding: 0;
+                           }
+                           }
+                  /* ============================
+                  CHART LAYOUT – CLEAN VERSION
+                  ============================ */
+
+                  /* Hauptcontainer für jedes Diagramm */
+                  .chart-wrap {
+                    border: 1px solid var(--border);
+                    background: rgba(255,255,255,0.02);
+                    border-radius: var(--radius);
+                    padding: 12px;
+                    margin-bottom: 12px;
+                    display: block;
+                  }
+
+                  /* Canvas Größe kontrollieren */
+                  .chart-wrap canvas {
+                    width: 100% !important;
+                    max-height: 240px;
+                    display: block;
+                  }
+
+                  /* Desktop größer */
+                  @media (min-width: 768px) {
+                    .chart-wrap canvas {
+                      max-height: 320px;
+                    }
+                  }
+
+                  /* ============================
+                  TRENNLINIE
+                  ============================ */
+
+                  .chart-divider {
+                    border-top: 1px dashed rgba(255,255,255,0.2);
+                    margin-top: 12px;
+                    margin-bottom: 10px;
+                  }
+
+                  /* ============================
+                  INFO BOX (unter Chart)
+                  ============================ */
+
+                  .chart-info-box {
+                    background: rgba(255,255,255,0.06);
+                    border-radius: 14px;
+                    padding: 12px;
+
+                    max-width: 92%;        /* ✅ macht sie schmaler */
+                    margin: 0 auto 24px auto;  /* ✅ zentriert */
+       }
+
+                  /* Titel */
+                  .chart-info-title {
+                    font-size: 13px;
+                    font-weight: 700;
+                    margin-bottom: 4px;
+                  }
+
+                  /* Beschreibung */
+                  .chart-info-desc {
+                    font-size: 12px;
+                    color: var(--muted);
+                    line-height: 1.35;
+                  }
+
+                  /* ============================
+                  MOBILE OPTIMIERUNG
+                  ============================ */
+
+                  @media (max-width: 640px) {
+
+                    .chart-wrap {
+                      background: transparent;
+                      border: none;
+                      border-radius: 0;
+                      padding: 0;
+                      margin: 12px 0;
+                    }
+
+                    .chart-wrap canvas {
+                      max-height: 220px;
+                    }
+
+                    .chart-info-box {
+                      margin: 0 4px 28px 4px;
+                    }
+                  }
+
+       #progressExerciseDropdown,
+       #createExerciseDropdown,
+       #setsExerciseDropdown {
+       width: 100%;
+       max-width: 280px;
+       }
+       #closeExerciseLogBtn,
+       #closeAccountSheetBtn {
+       display: none;
+       }
+       .sheet-card {
+       max-width: 520px;
+       margin: 0 auto;
+       }
+       @media (min-width: 768px) {
+       #closeExerciseLogBtn,
+       #closeAccountSheetBtn {
+       display: inline-flex;
+       }
+       }
+
+
+       .auto-hidden-btn {
+       display: none !important;
+       }
+       .exercise-dropdown-list li.active {
+       background: rgba(0,208,132,0.14);
+       border: 1px solid rgba(0,208,132,0.28);
+       }
+       .inline-form-message {
+       margin-top: 8px;
+       font-size: 13px;
+       color: var(--warning);
+       }
+       .account-shell {
+       max-width: 640px;
+       margin: 0 auto;
+       display: grid;
+       gap: 18px;
+       }
+       .account-section {
+       background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018));
+       border: 1px solid rgba(255,255,255,0.08);
+       border-radius: 22px;
+       padding: 18px;
+       box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+       }
+       .account-status-row {
+       display: flex;
+       align-items: center;
+       justify-content: space-between;
+       gap: 12px;
+       margin-bottom: 8px;
+       }
+       .account-status-label {
+       font-size: 12px;
+       color: var(--muted);
+       text-transform: uppercase;
+       letter-spacing: 0.34px;
+       }
+       .account-status-badge {
+       display: inline-flex;
+       align-items: center;
+       gap: 6px;
+       padding: 6px 10px;
+       border-radius: 999px;
+       border: 1px solid rgba(255,255,255,0.12);
+       font-size: 12px;
+       color: var(--text);
+       background: rgba(255,255,255,0.04);
+       }
+       .account-status-badge.logged-in {
+       border-color: rgba(0,208,132,0.35);
+       background: rgba(0,208,132,0.10);
+       color: rgba(255,255,255,0.92);
+       }
+       .account-user-status {
+       margin: 0 0 18px 0;
+       }
+       .account-section-title {
+       font-size: 12px;
+       text-transform: uppercase;
+       letter-spacing: 0.38px;
+       color: var(--muted);
+       margin-bottom: 12px;
+       font-weight: 700;
+       }
+       .account-email-row {
+       display: grid;
+       gap: 6px;
+       padding-bottom: 14px;
+       margin-bottom: 14px;
+       border-bottom: 1px solid rgba(255,255,255,0.06);
+       }
+       .account-email-value {
+       font-size: 14px;
+       color: var(--text);
+       overflow-wrap: anywhere;
+       }
+       .account-edit-grid {
+       display: grid;
+       gap: 12px;
+       }
+       .account-edit-grid.two-col {
+       grid-template-columns: repeat(2, minmax(0, 1fr));
+       }
+       .account-field label {
+       margin-top: 0;
+       margin-bottom: 6px;
+       }
+       .account-field input {
+       width: 100%;
+       -webkit-appearance: none;
+       appearance: none;
+       background: rgba(255,255,255,0.04);
+       border: 1px solid rgba(255,255,255,0.10);
+       color: var(--text);
+       border-radius: 14px;
+       padding: 12px 14px;
+       box-shadow: none;
+       }
+       .account-field input:focus {
+       border-color: rgba(0,208,132,0.55);
+       box-shadow: 0 0 0 3px rgba(0,208,132,0.10);
+       }
+       .account-field input:disabled {
+       opacity: 0.82;
+       cursor: default;
+       }
+       .account-field input[type="date"] {
+       color-scheme: dark;
+       background: rgba(255,255,255,0.04);
+       color: var(--text);
+       min-height: 46px;
+       }
+       .account-field input[type="date"]::-webkit-calendar-picker-indicator {
+       filter: invert(1) opacity(0.82);
+       cursor: pointer;
+       }
+       .account-edit-hint {
+       display: none;
+       margin-top: 12px;
+       font-size: 12px;
+       color: var(--muted);
+       }
+       .account-edit-hint.visible {
+       display: block;
+       }
+       .account-action-list {
+       display: flex;
+       flex-direction: column;
+       align-items: flex-start;
+       gap: 0;
+       width: 100%;
+       }
+       button.account-action-btn {
+       all: unset;
+       box-sizing: border-box;
+       display: block !important;
+       width: 100%;
+       cursor: pointer;
+       color: var(--text);
+       font-size: 14px;
+       line-height: 1.35;
+       letter-spacing: 0.2px;
+       padding: 8px 0;
+       background: transparent !important;
+       background-image: none !important;
+       border: none !important;
+       border-radius: 0 !important;
+       box-shadow: none !important;
+       outline: none !important;
+       text-align: left;
+       }
+       button.account-action-btn + button.account-action-btn {
+       margin-top: 2px;
+       }
+       button.account-action-btn:hover {
+       text-decoration: underline;
+       text-underline-offset: 4px;
+       }
+       button.account-action-btn:focus-visible {
+       outline: 2px solid rgba(255,255,255,0.28) !important;
+       outline-offset: 4px;
+       border-radius: 4px !important;
+       }
+       button.account-action-btn.accent {
+       color: var(--accent) !important;
+       font-weight: 700;
+       }
+       button.account-action-btn.danger {
+       color: var(--danger) !important;
+       font-weight: 700;
+       }
+       button.account-action-btn.neutral {
+       color: var(--text) !important;
+       }
+       button.account-action-btn.hidden {
+       display: none !important;
+       }
+      .account-field-view {
+       display: block;
+       width: 100%;
+       min-height: 46px;
+       padding: 12px 14px;
+       border-radius: 14px;
+       border: 1px solid rgba(255,255,255,0.08);
+       background: rgba(255,255,255,0.03);
+       color: var(--text);
+       line-height: 1.35;
+       overflow-wrap: anywhere;
+       box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      }
+      .account-field-view.empty {
+       color: var(--muted);
+      }
+      .profile-view-mode .account-field input {
+       display: none !important;
+      }
+      .profile-view-mode .account-field-view {
+       display: block !important;
+      }
+      .profile-edit-mode .account-field input {
+       display: block !important;
+      }
+      .profile-edit-mode .account-field-view {
+       display: none !important;
+      }
+      #accountSaveEditBtn,
+      #accountCancelEditBtn,
+      #accountSaveEditBtn[hidden],
+      #accountCancelEditBtn[hidden] {
+       display: none !important;
+      }
+      .account-edit-mode #accountSaveEditBtn,
+      .account-edit-mode #accountCancelEditBtn {
+       display: block !important;
+      }
+      .account-edit-mode #accountEditToggleBtn {
+       display: none !important;
+      }
+       .verification-overlay {
+       position: fixed;
+       inset: 0;
+       z-index: 3200;
+       background: rgba(0,0,0,0.80);
+       backdrop-filter: blur(8px);
+       display: none;
+       align-items: center;
+       justify-content: center;
+       padding: 18px;
+       }
+       .verification-overlay.open {
+       display: flex;
+       }
+       .verification-panel {
+       width: min(460px, 92vw);
+       background: rgba(8,9,12,0.97);
+       border: 1px solid var(--border);
+       border-radius: 22px;
+       box-shadow: var(--shadow);
+       padding: 20px;
+       position: relative;
+       }
+       .verification-close {
+       all: unset;
+       position: absolute;
+       top: 16px;
+       right: 16px;
+       cursor: pointer;
+       color: var(--muted);
+       font-size: 18px;
+       line-height: 1;
+       }
+       .verification-close:hover {
+       color: var(--text);
+       }
+       .verification-title {
+       font-size: 20px;
+       font-weight: 800;
+       letter-spacing: 0.2px;
+       margin: 0 0 10px 0;
+       }
+       .verification-text {
+       margin: 0;
+       color: var(--muted);
+       font-size: 14px;
+       line-height: 1.55;
+       }
+       .verification-text + .verification-text {
+       margin-top: 10px;
+       }
+       @media (max-width: 640px) {
+       .account-section {
+       border-radius: 18px;
+       padding: 16px;
+       }
+       .account-edit-grid.two-col {
+       grid-template-columns: 1fr;
+       }
+       .verification-panel {
+       border-radius: 18px;
+       padding: 18px;
+       }
+       }
+
+
+
+
+      .close-account-overlay,
+      .deletion-success-overlay {
+       position: fixed;
+       inset: 0;
+       z-index: 1200;
+       background: rgba(0,0,0,0.80);
+       backdrop-filter: blur(8px);
+       display: none;
+       align-items: center;
+       justify-content: center;
+       padding: 18px;
+      }
+      .close-account-overlay.open,
+      .deletion-success-overlay.open {
+       display: flex;
+      }
+      .close-account-panel,
+      .deletion-success-panel {
+       width: min(460px, 92vw);
+       background: rgba(8,9,12,0.97);
+       border: 1px solid var(--border);
+       border-radius: 22px;
+       box-shadow: var(--shadow);
+       padding: 20px;
+       position: relative;
+      }
+      .close-account-header,
+      .deletion-success-header {
+       display: flex;
+       align-items: flex-start;
+       justify-content: space-between;
+       gap: 12px;
+       margin-bottom: 10px;
+      }
+      .close-account-title,
+      .deletion-success-title {
+       font-size: 20px;
+       font-weight: 800;
+       letter-spacing: 0.2px;
+       margin: 0;
+      }
+      .close-account-close,
+      .deletion-success-close {
+       all: unset;
+       cursor: pointer;
+       color: var(--muted);
+       font-size: 18px;
+       line-height: 1;
+      }
+      .close-account-close:hover,
+      .deletion-success-close:hover {
+       color: var(--text);
+      }
+      .close-account-text,
+      .deletion-success-text {
+       margin: 0 0 14px 0;
+       color: var(--muted);
+       font-size: 14px;
+       line-height: 1.55;
+      }
+      .close-account-row {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       gap: 12px;
+       margin-top: 16px;
+      }
+      .close-account-inline-error {
+       display: none;
+       color: var(--danger);
+       font-size: 12px;
+       margin-top: 8px;
+      }
+      .close-account-confirm-btn,
+      .deletion-success-ok-btn {
+       appearance: none;
+       border: none;
+       background: var(--accent);
+       color: #000;
+       border-radius: 999px;
+       padding: 10px 16px;
+       font-weight: 800;
+       cursor: pointer;
+      }
+      .close-account-confirm-btn[disabled] {
+       opacity: 0.5;
+       cursor: default;
+      }
+      .close-account-cancel-btn {
+       appearance: none;
+       border: none;
+       background: transparent;
+       color: var(--text);
+       cursor: pointer;
+       padding: 0;
+       font-size: 14px;
+      }
+      .close-account-cancel-btn:hover {
+       text-decoration: underline;
+       text-underline-offset: 4px;
+      }
+      @media (max-width: 640px) {
+       .close-account-panel,
+       .deletion-success-panel {
+        border-radius: 18px;
+        padding: 18px;
+       }
+      }
+
+
+      #closeAccountOverlay,
+      #deletionSuccessOverlay {
+       position: fixed !important;
+       inset: 0 !important;
+       width: 100vw !important;
+       height: 100vh !important;
+       z-index: 3000 !important;
+       display: none;
+       visibility: hidden;
+       pointer-events: none;
+       align-items: center !important;
+       justify-content: center !important;
+       padding: 18px !important;
+       background: rgba(0,0,0,0.82) !important;
+       backdrop-filter: blur(8px) !important;
+       overflow: hidden !important;
+      }
+      #closeAccountOverlay.open,
+      #deletionSuccessOverlay.open {
+       display: flex !important;
+       visibility: visible !important;
+       pointer-events: auto !important;
+      }
+      #closeAccountOverlay .close-account-panel,
+      #deletionSuccessOverlay .deletion-success-panel {
+       width: min(460px, 92vw) !important;
+       max-width: 460px !important;
+       margin: 0 auto !important;
+      }
+
+
+      #loginOverlay {
+       position: fixed !important;
+       inset: 0 !important;
+       width: 100vw !important;
+       height: 100vh !important;
+       z-index: 2500 !important;
+       display: flex;
+       visibility: visible;
+       pointer-events: auto;
+       align-items: center !important;
+       justify-content: center !important;
+       background: rgba(0,0,0,0.75) !important;
+       backdrop-filter: blur(6px) !important;
+      }
+      #loginOverlay.hidden {
+       display: none !important;
+       visibility: hidden !important;
+       pointer-events: none !important;
+      }
+
+
+      /* ============================
+      Feature update: reusable summary, records, statistics, weight tracking
+      ============================ */
+      .metric-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 14px 0}.metric-card{border:1px solid var(--border);background:rgba(255,255,255,.03);border-radius:16px;padding:12px}.metric-label{color:var(--muted);font-size:11px;letter-spacing:.35px;text-transform:uppercase;margin-bottom:6px}.metric-value{color:var(--text);font-size:20px;font-weight:900;letter-spacing:.2px}.metric-subtext{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.35}.progress-summary{margin:12px 0 14px 0;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))}.progress-summary-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.progress-summary-title{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.38px;font-weight:700}.progress-summary-value{font-size:30px;font-weight:950;letter-spacing:-.4px}.progress-summary-value.pos{color:rgba(0,208,132,.98)}.progress-summary-value.neg{color:rgba(255,77,77,.92)}.progress-summary-desc{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.4}.control-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0}.control-row .search-input,.control-row select{width:auto;min-width:170px;max-width:100%}.record-list,.stats-list,.weight-list{list-style:none;padding:0;margin:12px 0 0 0;display:grid;gap:10px}.record-row,.stats-row,.weight-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--border);background:rgba(255,255,255,.03);border-radius:14px;padding:12px}.record-main,.stats-main,.weight-main{min-width:0}.record-name,.stats-name,.weight-date{color:var(--text);font-size:14px;font-weight:800;text-transform:uppercase;overflow-wrap:anywhere}.record-meta,.stats-meta,.weight-meta{color:var(--muted);font-size:12px;margin-top:4px}.record-values{display:flex;align-items:flex-end;gap:12px;white-space:nowrap;text-align:right}.record-value-block{display:grid;gap:3px}.record-value-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.3px}.record-value-number{color:var(--text);font-size:13px;font-weight:800}.weight-chart-actions{display:flex;justify-content:flex-end;margin:12px 0}@media(max-width:640px){.metric-card-grid{grid-template-columns:1fr}.progress-summary{padding:12px 0;border:none;background:transparent}.record-row,.stats-row,.weight-row{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.08);border-radius:0;padding:12px 0}.record-values{gap:8px}.control-row{align-items:stretch}.control-row .search-input,.control-row select{width:100%}}
+
+
+      /* ============================
+      Small UI refinements - body weight modal, progress size, records sort
+      ============================ */
+      #weightEntryModal {
+        z-index: 3600 !important;
+        position: fixed !important;
+        inset: 0 !important;
+      }
+      #weightEntryModal.open {
+        display: block !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+      #weightEntryModal .modal-overlay {
+        z-index: 0 !important;
+      }
+      #weightEntryModal .modal-panel {
+        z-index: 1 !important;
+      }
+      .progress-summary-value {
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.2px !important;
+      }
+      #recordsSortSelect {
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        padding: 9px 10px !important;
+        border-radius: 999px !important;
+        min-height: 38px !important;
+      }
+
+      #weightEntryDateInput {
+        background: #0b0c0f !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.10) !important;
+        color-scheme: dark;
+      }
+
+      #weightEntryDateInput::-webkit-calendar-picker-indicator {
+        filter: brightness(0) invert(1) opacity(0.9) !important;
+        cursor: pointer;
+      }
+
+      #weightEntryDateInput:focus {
+        border-color: rgba(0,208,132,0.55) !important;
+        box-shadow: 0 0 0 3px rgba(0,208,132,0.10) !important;
+      }
+.app-toast-region{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:5000;width:min(420px,calc(100vw - 32px));pointer-events:none}.app-toast{display:flex;gap:10px;padding:12px 14px;border-radius:16px;background:rgba(24,25,29,.97);border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 42px rgba(0,0,0,.5)}.app-toast.success{border-color:rgba(0,208,132,.38)}.app-toast.error{border-color:rgba(255,77,77,.42)}
