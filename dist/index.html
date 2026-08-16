@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Training Journal</title>
+    <script type="module" crossorigin src="./assets/index-DV2q-9tC.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Bke5j6EX.css">
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <h1>Training</h1>
+            <div class="tagline">track • charts • progress</div>
+          </div>
+          <button
+            id="menuButton"
+            class="menu-btn"
+            aria-label="Menu"
+            type="button"
+          >
+            <div class="hamburger" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+          </button>
+        </div>
+        <div class="tabs">
+          <button id="tabTraining" class="tab-link active" type="button">
+            Training
+          </button>
+          <button id="tabProgress" class="tab-link" type="button">
+            Progress
+          </button>
+          <button id="tabSets" class="tab-link" type="button">Sets</button>
+        </div>
+      </div>
+      <div class="content">
+        <!-- TRAINING VIEW -->
+        <div id="trainingView" class="view active">
+          <div class="card">
+            <div class="headline">Overall Training Performance</div>
+            <div
+              id="loginHintTraining"
+              class="login-hint"
+              style="display: none; margin-top: 12px"
+            >
+              You are not logged in. Use <b>Account</b> to log in.
+            </div>
+            <div id="progressSummaryCard" class="progress-summary">
+              <div class="progress-summary-top">
+                <div class="progress-summary-title">Overall Progress</div>
+                <div id="overallProgressValue" class="progress-summary-value">
+                  —
+                </div>
+              </div>
+              <div
+                id="overallProgressDescription"
+                class="progress-summary-desc"
+              >
+                Progress is calculated from the first and latest training day in
+                the selected range.
+              </div>
+            </div>
+            <div id="rangeFilter">
+              <button type="button" class="range-btn" data-range="day">
+                Day
+              </button>
+              <button type="button" class="range-btn" data-range="week">
+                Week
+              </button>
+              <button type="button" class="range-btn" data-range="month">
+                Month
+              </button>
+              <button type="button" class="range-btn" data-range="year">
+                Year
+              </button>
+              <button type="button" class="range-btn active" data-range="max">
+                Max
+              </button>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="overallChart"></canvas>
+            </div>
+            <div class="exercises-header">
+              <h3 style="margin: 18px 0 0 0">Exercises</h3>
+              <div class="sort-wrap">
+                <button id="sortButton" class="link-btn muted" type="button">
+                  Sort
+                </button>
+                <div id="sortMenu" class="sort-menu" aria-hidden="true">
+                  <button
+                    class="sort-item"
+                    data-sort="improv_asc"
+                    type="button"
+                  >
+                    Improvement ascending
+                  </button>
+                  <button
+                    class="sort-item active"
+                    data-sort="improv_desc"
+                    type="button"
+                  >
+                    Improvement descending
+                  </button>
+                  <button class="sort-item" data-sort="alpha_asc" type="button">
+                    Alphabetical ascending
+                  </button>
+                  <button
+                    class="sort-item"
+                    data-sort="alpha_desc"
+                    type="button"
+                  >
+                    Alphabetical descending
+                  </button>
+                </div>
+                <input
+                  id="exerciseSearch"
+                  class="search-input"
+                  type="text"
+                  placeholder="Search"
+                />
+              </div>
+            </div>
+            <ul id="exercisesList" class="exercise-list"></ul>
+          </div>
+        </div>
+        <!-- PROGRESS VIEW -->
+        <div id="progressView" class="view">
+          <div class="card">
+            <div class="headline">Progress</div>
+            <p class="subtle">
+              Daily charts for the selected exercise (range filter applies only
+              here).
+            </p>
+            <div
+              id="loginHintProgress"
+              class="login-hint"
+              style="display: none; margin-top: 12px"
+            >
+              You are not logged in. Use <b>Account</b> to log in.
+            </div>
+            <div id="progressRangeFilter">
+              <button type="button" class="range-btn" data-range="day">
+                Day
+              </button>
+              <button type="button" class="range-btn" data-range="week">
+                Week
+              </button>
+              <button type="button" class="range-btn" data-range="month">
+                Month
+              </button>
+              <button type="button" class="range-btn" data-range="year">
+                Year
+              </button>
+              <button type="button" class="range-btn active" data-range="max">
+                Max
+              </button>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-row">
+                <label
+                  for="progressExerciseSearch"
+                  style="margin: 0; min-width: 220px"
+                  >Exercise</label
+                >
+                <div id="progressExerciseDropdown" class="exercise-dropdown">
+                  <input
+                    type="text"
+                    id="progressExerciseSearch"
+                    placeholder="Select exercise"
+                    autocomplete="off"
+                  />
+                  <ul
+                    id="progressExerciseList"
+                    class="exercise-dropdown-list"
+                  ></ul>
+                </div>
+                <button
+                  id="showProgressChartsButton"
+                  class="link-btn accent auto-hidden-btn"
+                  type="button"
+                >
+                  Show
+                </button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="ivPerDayChart"></canvas>
+
+              <div class="chart-divider"></div>
+
+              <div class="chart-info-box">
+                <div class="chart-info-title">Intensity Volume</div>
+                <div class="chart-info-desc">
+                  Total training volume per day, weighted by intensity.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="e1rmPerDayChart"></canvas>
+
+              <div class="chart-divider"></div>
+
+              <div class="chart-info-box">
+                <div class="chart-info-title">Estimated 1RM</div>
+                <div class="chart-info-desc">
+                  Highest estimated one‑rep max achieved per training day.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="maxWeightPerDayChart"></canvas>
+              <div class="chart-divider"></div>
+
+              <div class="chart-info-box">
+                <div class="chart-info-title">Max Weight</div>
+                <div class="chart-info-desc">
+                  Highest weight lifted on each training day.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="volumePerDayChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Training Volume</div>
+                <div class="chart-info-desc">
+                  Total volume per day calculated as weight multiplied by
+                  repetitions.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="weightPerDayChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Weight</div>
+                <div class="chart-info-desc">
+                  Maximum weight used across all sets per training day.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="repsPerDayChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Repetitions</div>
+                <div class="chart-info-desc">
+                  Total number of repetitions performed per training day.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- SETS VIEW -->
+        <div id="setsView" class="view">
+          <div class="card">
+            <div class="headline">Sets</div>
+            <p class="subtle">
+              Per-set charts for exactly one selected day. Default is the latest
+              day with entries.
+            </p>
+            <div
+              id="loginHintSets"
+              class="login-hint"
+              style="display: none; margin-top: 12px"
+            >
+              You are not logged in. Use <b>Account</b> to log in.
+            </div>
+            <div class="card" style="margin-top: 14px">
+              <div class="chart-row">
+                <label
+                  for="setsExerciseSearch"
+                  style="margin: 0; min-width: 220px"
+                  >Exercise</label
+                >
+                <div id="setsExerciseDropdown" class="exercise-dropdown">
+                  <input
+                    type="text"
+                    id="setsExerciseSearch"
+                    placeholder="Select exercise"
+                    autocomplete="off"
+                  />
+                  <ul id="setsExerciseList" class="exercise-dropdown-list"></ul>
+                </div>
+                <label for="setsDaySelect" style="margin: 0; min-width: 90px"
+                  >Day</label
+                >
+                <select id="setsDaySelect"></select>
+                <button
+                  id="setsPrevDayButton"
+                  class="link-btn muted"
+                  type="button"
+                >
+                  Prev
+                </button>
+                <button
+                  id="setsNextDayButton"
+                  class="link-btn muted"
+                  type="button"
+                >
+                  Next
+                </button>
+                <button
+                  id="setsLatestButton"
+                  class="link-btn muted"
+                  type="button"
+                >
+                  Latest
+                </button>
+                <button
+                  id="showSetsChartsButton"
+                  class="link-btn accent auto-hidden-btn"
+                  type="button"
+                >
+                  Show
+                </button>
+              </div>
+            </div>
+            <div class="sets-meta" id="setsMetaLine">
+              <span>Selected day: <b id="setsSelectedDayLabel">—</b></span>
+              <span>Latest day: <b id="setsLatestDayLabel">—</b></span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="ivPerSetChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Intensity Volume per Set</div>
+                <div class="chart-info-desc">
+                  Intensity‑adjusted training volume for each individual set.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="e1rmPerSetChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Estimated 1RM per Set</div>
+                <div class="chart-info-desc">
+                  Estimated one-rep max calculated for each set.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="maxWeightPerSetChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Weight per Set</div>
+                <div class="chart-info-desc">
+                  Weight used in each individual set on the selected day.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="volumePerSetChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Volume per Set</div>
+                <div class="chart-info-desc">
+                  Training volume per set calculated as weight multiplied by
+                  repetitions.
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="repsPerSetChart"></canvas>
+              <div class="chart-divider"></div>
+              <div class="chart-info-box">
+                <div class="chart-info-title">Repetitions per Set</div>
+                <div class="chart-info-desc">
+                  Number of repetitions completed in each set.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="appToastRegion" class="app-toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+    <!-- Floating buttons -->
+    <div class="fab-bar">
+      <button id="fabCreate" class="fab" type="button">Create</button>
+      <button id="fabExerciseLog" class="fab" type="button">
+        Exercise Log
+      </button>
+    </div>
+    <!-- Drawer overlay -->
+    <div id="overlay" class="overlay"></div>
+    <!-- Drawer -->
+    <aside id="drawer" class="drawer" aria-hidden="true">
+      <div class="drawer-header">
+        <div class="drawer-title">Menu</div>
+        <button id="closeDrawerBtn" class="link-btn muted" type="button">
+          Close
+        </button>
+      </div>
+      <div class="drawer-body">
+        <ul class="menu-list">
+          <li class="menu-item" id="menuAccount">
+            <span>Account</span>
+            <span class="pill" id="accountPill">Login</span>
+          </li>
+          <li class="menu-item" id="menuTraining">
+            <span>Training</span>
+            <span class="pill">Tab</span>
+          </li>
+          <li class="menu-item" id="menuProgress">
+            <span>Progress</span>
+            <span class="pill">Tab</span>
+          </li>
+          <li class="menu-item" id="menuSets">
+            <span>Sets</span>
+            <span class="pill">Tab</span>
+          </li>
+          <li class="menu-item" id="menuExerciseLog">
+            <span>Exercise Log</span>
+            <span class="pill">Data</span>
+          </li>
+          <li class="menu-item" id="menuPersonalRecords">
+            <span>Personal Records</span>
+            <span class="pill">PRs</span>
+          </li>
+          <li class="menu-item" id="menuStatistics">
+            <span>Statistics</span>
+            <span class="pill">Stats</span>
+          </li>
+          <li class="menu-item" id="menuWeightTracking">
+            <span>Weight Tracking</span>
+            <span class="pill">Body</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+    <!-- Create modal -->
+    <div id="createModal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="createModalOverlay"></div>
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="modal-title">Create Workout Entry</div>
+          <button id="createModalClose" class="modal-close" type="button">
+            Close
+          </button>
+        </div>
+        <p class="subtle" style="margin-bottom: 8px">
+          Create a new entry. Set number is assigned automatically per day &
+          exercise.
+        </p>
+        <div class="actions" style="margin: 8px 0 10px 0">
+          <button id="useLastEntryButton" class="link-btn accent" type="button">
+            Use Last Entry
+          </button>
+        </div>
+        <label for="createExerciseSearch">Exercise</label>
+        <div id="createExerciseDropdown" class="exercise-dropdown">
+          <input
+            type="text"
+            id="createExerciseSearch"
+            placeholder="e.g. Bench Press"
+            autocomplete="off"
+          />
+          <ul id="createExerciseList" class="exercise-dropdown-list"></ul>
+        </div>
+        <div
+          id="createExerciseValidationMessage"
+          style="color: var(--warning); margin-top: 6px; display: none"
+        ></div>
+        <div
+          class="grid"
+          style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px"
+        >
+          <div>
+            <label for="createRepetitionsInput">Repetitions</label>
+            <input
+              type="number"
+              id="createRepetitionsInput"
+              placeholder="e.g. 8"
+            />
+          </div>
+          <div>
+            <label for="createWeightInput">Weight (kg)</label>
+            <input
+              type="number"
+              id="createWeightInput"
+              placeholder="e.g. 80"
+              step="0.1"
+            />
+          </div>
+          <div>
+            <label for="createRpeInput">RPE (0-10)</label>
+            <input
+              type="number"
+              id="createRpeInput"
+              placeholder="e.g. 8"
+              min="0"
+              max="10"
+            />
+          </div>
+        </div>
+        <div class="actions" style="margin-top: 12px">
+          <button id="createSaveButton" class="link-btn accent" type="button">
+            Save
+          </button>
+          <button id="createCancelButton" class="link-btn muted" type="button">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Edit Workout Modal -->
+    <div id="editWorkoutModal" class="modal" aria-hidden="true">
+      <div class="modal-overlay"></div>
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="modal-title">Edit Workout Entry</div>
+          <button id="editDeleteButton" class="link-btn danger">Delete</button>
+        </div>
+        <label>Exercise</label>
+        <input type="text" id="editExerciseInput" disabled />
+        <label>Repetitions</label>
+        <input type="number" id="editRepsInput" />
+        <label>Weight (kg)</label>
+        <input type="number" id="editWeightInput" step="0.1" />
+        <label>RPE</label>
+        <input type="number" id="editRpeInput" min="0" max="10" />
+        <div class="actions">
+          <button id="editSaveButton" class="link-btn accent">Save</button>
+          <button id="editCancelButton" class="link-btn muted">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay hidden">
+      <div class="login-panel">
+        <h2 id="loginPanelTitle">Welcome!</h2>
+        <p id="loginPanelSubtitle">Please log in to continue.</p>
+        <input type="email" id="loginEmailOverlay" placeholder="Email" />
+
+        <input
+          type="password"
+          id="loginPasswordOverlay"
+          placeholder="Password"
+        />
+
+        <div
+          id="passwordError"
+          style="color: #ff4d4d; font-size: 12px; display: none; margin-top: 4px"
+        ></div>
+
+        <input
+          type="password"
+          id="authPasswordConfirm"
+          placeholder="Confirm Password"
+          style="display: none"
+        />
+
+        <div
+          id="confirmPasswordError"
+          style="color: #ff4d4d; font-size: 12px; display: none; margin-top: 4px"
+        ></div>
+
+        <input
+          type="text"
+          id="authNickname"
+          placeholder="Nickname"
+          style="display: none"
+        />
+        <button id="resendVerificationButton" style="display: none">
+          Resend verification email
+        </button>
+
+        <div class="login-actions">
+          <button id="loginOverlayButton" class="accent-btn">Login</button>
+          <button id="registerOverlayButton" class="link-btn muted">
+            Create account
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Verification Notice Overlay -->
+    <div
+      id="verificationNoticeOverlay"
+      class="verification-overlay"
+      aria-hidden="true"
+    >
+      <div class="verification-panel">
+        <button
+          id="closeVerificationNoticeBtn"
+          class="verification-close"
+          type="button"
+          aria-label="Close"
+        >
+          ×
+        </button>
+        <h2 class="verification-title">Verify your email</h2>
+        <p class="verification-text">
+          We have sent a verification email to
+          <span id="verificationNoticeEmail">your email address</span>.
+        </p>
+        <p class="verification-text">
+          Please verify your email address before logging in. If the email does
+          not appear after a few minutes, please also check your spam or junk
+          folder.
+        </p>
+      </div>
+    </div>
+
+    <!-- Close Account Overlay -->
+    <div
+      id="closeAccountOverlay"
+      class="close-account-overlay"
+      aria-hidden="true"
+      style="display:none;visibility:hidden;pointer-events:none;"
+    >
+      <div class="close-account-panel">
+        <div class="close-account-header">
+          <h2 class="close-account-title">Delete account</h2>
+          <button
+            id="closeAccountOverlayX"
+            class="close-account-close"
+            type="button"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="close-account-text">
+          Please enter your current password to confirm permanent account
+          deletion.
+        </p>
+        <label for="closeAccountPasswordInput">Password</label>
+        <input
+          id="closeAccountPasswordInput"
+          type="password"
+          placeholder="Enter current password"
+        />
+        <div id="closeAccountError" class="close-account-inline-error"></div>
+        <div class="close-account-row">
+          <button
+            id="cancelCloseAccountBtn"
+            class="close-account-cancel-btn"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirmCloseAccountBtn"
+            class="close-account-confirm-btn"
+            type="button"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deletion Success Overlay -->
+    <div
+      id="deletionSuccessOverlay"
+      class="deletion-success-overlay"
+      aria-hidden="true"
+      style="display:none;visibility:hidden;pointer-events:none;"
+    >
+      <div class="deletion-success-panel">
+        <div class="deletion-success-header">
+          <h2 class="deletion-success-title">Deletion successful</h2>
+          <button
+            id="closeDeletionSuccessBtn"
+            class="deletion-success-close"
+            type="button"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="deletion-success-text">
+          Your account and related workout data were deleted successfully.
+        </p>
+        <div class="close-account-row" style="justify-content:flex-end;">
+          <button
+            id="deletionSuccessOkBtn"
+            class="deletion-success-ok-btn"
+            type="button"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Sheet -->
+    <div id="accountSheet" class="sheet" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="headline">Account</div>
+        <button id="closeAccountSheetBtn" class="link-btn muted" type="button">
+          Close
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="account-shell">
+          <div
+            class="account-section card profile-view-mode"
+            id="accountInfoSection"
+          >
+            <div class="account-status-row">
+              <span class="account-status-label">Status</span>
+              <span id="accountStatusBadge" class="account-status-badge"
+                >Logged out</span
+              >
+            </div>
+            <p id="userStatus" class="subtle account-user-status"></p>
+
+            <div class="account-section-title">Profile</div>
+
+            <div class="account-email-row">
+              <span class="account-info-label">Email</span>
+              <span id="accountInfoEmail" class="account-email-value">—</span>
+            </div>
+
+            <div class="account-edit-grid">
+              <div class="account-field">
+                <label for="accountNicknameInput">Nickname</label>
+                <div id="accountNicknameView" class="account-field-view empty">
+                  —
+                </div>
+                <input
+                  id="accountNicknameInput"
+                  type="text"
+                  placeholder="Nickname"
+                  disabled
+                  style="display:none;"
+                />
+              </div>
+              <div class="account-field">
+                <label for="accountStreetInput">Street</label>
+                <div id="accountStreetView" class="account-field-view empty">
+                  —
+                </div>
+                <input
+                  id="accountStreetInput"
+                  type="text"
+                  placeholder="Street"
+                  disabled
+                  style="display:none;"
+                />
+              </div>
+            </div>
+
+            <div class="account-edit-grid two-col">
+              <div class="account-field">
+                <label for="accountPostalCodeInput">Post code</label>
+                <div
+                  id="accountPostalCodeView"
+                  class="account-field-view empty"
+                >
+                  —
+                </div>
+                <input
+                  id="accountPostalCodeInput"
+                  type="text"
+                  placeholder="Post code"
+                  disabled
+                  style="display:none;"
+                />
+              </div>
+              <div class="account-field">
+                <label for="accountCityInput">City</label>
+                <div id="accountCityView" class="account-field-view empty">
+                  —
+                </div>
+                <input
+                  id="accountCityInput"
+                  type="text"
+                  placeholder="City"
+                  disabled
+                  style="display:none;"
+                />
+              </div>
+            </div>
+
+            <div class="account-edit-grid two-col">
+              <div class="account-field">
+                <label for="accountCountryInput">Country</label>
+                <div id="accountCountryView" class="account-field-view empty">
+                  —
+                </div>
+                <input
+                  id="accountCountryInput"
+                  type="text"
+                  placeholder="Country"
+                  disabled
+                  style="display:none;"
+                />
+              </div>
+              <div class="account-field">
+                <label for="accountBirthDateInput">Birth date</label>
+                <div id="accountBirthDateView" class="account-field-view empty">
+                  —
+                </div>
+                <input
+                  id="accountBirthDateInput"
+                  type="date"
+                  disabled
+                  style="display:none;"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="account-section card" id="accountActionsSection">
+            <div class="account-section-title">Actions</div>
+            <div class="account-action-list" style="display:block;width:100%;">
+              <button
+                id="accountEditToggleBtn"
+                class="account-action-btn neutral"
+                type="button"
+                style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;"
+              >
+                Edit Account
+              </button>
+              <button
+                id="accountSaveEditBtn"
+                class="account-action-btn accent"
+                type="button"
+                hidden
+                style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--accent);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;"
+              >
+                Save Account
+              </button>
+              <button
+                id="accountCancelEditBtn"
+                class="account-action-btn danger"
+                type="button"
+                hidden
+                style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;"
+              >
+                Cancel changes
+              </button>
+              <button
+                id="accountResetPasswordBtn"
+                class="account-action-btn neutral"
+                type="button"
+                style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;"
+              >
+                Reset password
+              </button>
+              <button
+                id="logoutButton"
+                class="account-action-btn neutral"
+                type="button"
+                style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;"
+              >
+                Log out
+              </button>
+              <button
+                id="accountDeleteBtn"
+                class="account-action-btn danger"
+                type="button"
+                style="all:unset;display:block;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;"
+              >
+                Close account
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="account-section card"
+            id="accountLoggedOutSection"
+            style="display:none;"
+          >
+            <div class="account-section-title">Not logged in</div>
+            <p class="subtle">
+              Use the login / registration overlay to sign in or create a new
+              account.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercise Log Sheet -->
+    <div id="exerciseLogSheet" class="sheet" aria-hidden="true">
+      <!-- Swipe Handle -->
+      <div class="sheet-handle"></div>
+      <!-- Header -->
+      <div class="sheet-header">
+        <div class="headline">Exercise Log</div>
+        <button id="closeExerciseLogBtn" class="link-btn muted" type="button">
+          Close
+        </button>
+      </div>
+      <!-- Content -->
+      <div class="sheet-body">
+        <ul id="exerciseLogList"></ul>
+      </div>
+    </div>
+
+    <!-- Personal Records Sheet -->
+    <div id="personalRecordsSheet" class="sheet" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="headline">Personal Records</div>
+        <button
+          id="closePersonalRecordsBtn"
+          class="link-btn muted"
+          type="button"
+        >
+          Close
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="card sheet-card">
+          <p class="subtle">
+            Here are your personal records across all exercises.
+          </p>
+          <div class="control-row">
+            <input
+              id="recordsSearchInput"
+              class="search-input"
+              type="text"
+              placeholder="Search exercise"
+            /><select id="recordsSortSelect">
+              <option value="e1rm_desc">e1RM descending</option>
+              <option value="e1rm_asc">e1RM ascending</option>
+              <option value="weight_desc">Weight descending</option>
+              <option value="weight_asc">Weight ascending</option>
+              <option value="alpha_asc">Alphabetical ascending</option>
+              <option value="alpha_desc">Alphabetical descending</option>
+            </select>
+          </div>
+          <ul id="personalRecordsList" class="record-list"></ul>
+        </div>
+      </div>
+    </div>
+    <!-- Statistics Sheet -->
+    <div id="statisticsSheet" class="sheet" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="headline">Statistics</div>
+        <button id="closeStatisticsBtn" class="link-btn muted" type="button">
+          Close
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="card sheet-card">
+          <p class="subtle">
+            General training statistics based on your saved workout entries.
+          </p>
+          <div id="statisticsMetricGrid" class="metric-card-grid"></div>
+          <ul id="statisticsList" class="stats-list"></ul>
+        </div>
+      </div>
+    </div>
+    <!-- Weight Tracking Sheet -->
+    <div id="weightTrackingSheet" class="sheet" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="headline">Weight Tracking</div>
+        <button
+          id="closeWeightTrackingBtn"
+          class="link-btn muted"
+          type="button"
+        >
+          Close
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="card sheet-card">
+          <p class="subtle">Track your body weight over time.</p>
+          <div class="weight-chart-actions">
+            <button
+              id="openWeightEntryButton"
+              class="link-btn accent"
+              type="button"
+            >
+              Enter Weight
+            </button>
+          </div>
+          <div class="chart-wrap"><canvas id="bodyWeightChart"></canvas></div>
+          <ul id="weightEntriesList" class="weight-list"></ul>
+        </div>
+      </div>
+    </div>
+    <!-- Weight Entry Modal -->
+    <div id="weightEntryModal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="weightEntryModalOverlay"></div>
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="modal-title">Enter Weight</div>
+          <button id="weightEntryModalClose" class="modal-close" type="button">
+            Close
+          </button>
+        </div>
+        <label for="weightEntryDateInput">Date</label
+        ><input id="weightEntryDateInput" type="date" /><label
+          for="weightEntryValueInput"
+          >Weight (kg)</label
+        ><input
+          id="weightEntryValueInput"
+          type="number"
+          step="0.1"
+          placeholder="e.g. 82.5"
+        />
+        <div
+          id="weightEntryValidationMessage"
+          class="inline-form-message"
+          style="display:none;"
+        ></div>
+        <div class="actions" style="margin-top: 12px">
+          <button
+            id="saveWeightEntryButton"
+            class="link-btn accent"
+            type="button"
+          >
+            Save</button
+          ><button
+            id="cancelWeightEntryButton"
+            class="link-btn muted"
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+  </body>
+</html>
