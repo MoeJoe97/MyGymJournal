@@ -110,11 +110,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       const createWeightInput = document.getElementById("createWeightInput");
       const createRpeInput = document.getElementById("createRpeInput");
       const createExerciseValidationMessage = document.getElementById("createExerciseValidationMessage");
-      const setTypeSelector = document.querySelector(".set-type-selector");
-      const advancedSetEditor = document.getElementById("advancedSetEditor");
-      const advancedSetRows = document.getElementById("advancedSetRows");
-      const addAdvancedSetRowButton = document.getElementById("addAdvancedSetRowButton");
-      const advancedSetHelp = document.getElementById("advancedSetHelp");
+      const setTypeSelector=document.querySelector('.set-type-selector'), normalSetEditor=document.getElementById('normalSetEditor'), advancedSetEditor=document.getElementById('advancedSetEditor'), advancedSetRows=document.getElementById('advancedSetRows'), addAdvancedSetRowButton=document.getElementById('addAdvancedSetRowButton'), advancedSetHelp=document.getElementById('advancedSetHelp');
       const messageDiv = document.getElementById("message");
       setTimeout(() => { try { if (messageDiv && typeof messageDiv.remove === "function") messageDiv.remove(); } catch (_) {} }, 0);
 
@@ -162,8 +158,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       let activeExerciseKey = null;
       let activeRangeTraining = "max";
       let activeRangeProgress = "max";
-      let activeCreateSetType = "normal";
-      let advancedSetRowCounter = 0;
+      let activeCreateSetType='normal';
       let authMode = "login";
       let lastHapticIndex = null;
       let pendingVerificationEmail = "";
@@ -913,7 +908,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
           const data = doc.data();
           const timestamp = tsToDate(data.timestamp);
           if (timestamp instanceof Date && !isNaN(timestamp)) {
-            cachedAllWorkouts.push({ id: doc.id, timestamp, exercise: data.exercise || '', exerciseDisplay: data.exerciseDisplay || null, intensityVolume: data.intensityVolume || 0, setNumber: data.setNumber || '', repetitions: data.repetitions || 0, weight: data.weight || 0, rpe: data.rpe, e1RM: data.e1RM || 0, setType: data.setType || 'normal', groupId: data.groupId || null, groupPosition: data.groupPosition || null });
+            cachedAllWorkouts.push({ id: doc.id, timestamp, exercise: data.exercise || '', exerciseDisplay: data.exerciseDisplay || null, intensityVolume: data.intensityVolume || 0, setNumber: data.setNumber || '', repetitions: data.repetitions || 0, weight: data.weight || 0, rpe: data.rpe, e1RM: data.e1RM || 0, setType:data.setType||'normal', groupId:data.groupId||null, groupPosition:data.groupPosition||null });
           }
         });
       }
@@ -935,7 +930,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
           const content = document.createElement('div'); content.className = 'exercise-log-content';
           const date = document.createElement('div'); date.className = 'exercise-log-date'; date.textContent = formatDayKeyDE(getLocalDayKey(item.timestamp));
           const name = document.createElement('div'); name.className = 'exercise-log-name'; name.textContent = (item.exerciseDisplay || item.exercise).toUpperCase();
-          const meta = document.createElement('div'); meta.className = 'exercise-log-meta'; meta.textContent = `${item.repetitions} reps × ${item.weight} kg${item.setType && item.setType !== 'normal' ? ` · ${item.setType === 'superset' ? 'Superset' : 'Drop Set'} ${item.groupPosition || ''}` : ''}`;
+          const meta = document.createElement('div'); meta.className = 'exercise-log-meta'; meta.textContent = `${item.repetitions} reps × ${item.weight} kg`;
           const header = document.createElement('div'); header.className = 'exercise-log-header'; header.append(date, name); content.append(header, meta);
           const arrow = document.createElement('div'); arrow.className = 'exercise-log-arrow'; arrow.textContent = '>'; arrow.addEventListener('click', () => openEditWorkoutModal(item));
           row.append(content, arrow); list.appendChild(row);
@@ -1155,95 +1150,14 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       }
 
 
-      function createGroupId(prefix) {
-        if (globalThis.crypto?.randomUUID) return `${prefix}_${crypto.randomUUID()}`;
-        return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-      }
-      function setCreateSetType(type) {
-        activeCreateSetType = ['normal', 'superset', 'dropset'].includes(type) ? type : 'normal';
-        setTypeSelector?.querySelectorAll('.set-type-btn').forEach((button) => {
-          const active = button.dataset.setType === activeCreateSetType;
-          button.classList.toggle('active', active);
-          button.setAttribute('aria-pressed', String(active));
-        });
-        const advanced = activeCreateSetType !== 'normal';
-        if (advancedSetEditor) advancedSetEditor.hidden = !advanced;
-        if (!advanced) {
-          if (advancedSetRows) advancedSetRows.innerHTML = '';
-          advancedSetRowCounter = 0;
-          return;
-        }
-        if (advancedSetHelp) advancedSetHelp.textContent = activeCreateSetType === 'superset'
-          ? 'Add at least one more exercise. All exercises are saved together.'
-          : 'Add at least one reduced-weight stage for the same exercise.';
-        if (addAdvancedSetRowButton) addAdvancedSetRowButton.textContent = activeCreateSetType === 'superset' ? 'Add Exercise' : 'Add Drop';
-        if (!advancedSetRows?.children.length) addAdvancedSetRow();
-        refreshAdvancedExerciseOptions();
-      }
-      function buildExerciseSelect() {
-        const select = document.createElement('select');
-        select.className = 'advanced-exercise-select';
-        select.setAttribute('aria-label', 'Exercise');
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select exercise';
-        select.appendChild(placeholder);
-        Array.from(clientSideExercisesMap.entries()).sort((a,b) => a[1].localeCompare(b[1])).forEach(([key,name]) => {
-          const option = document.createElement('option'); option.value = key; option.textContent = name; select.appendChild(option);
-        });
-        return select;
-      }
-      function addAdvancedSetRow(values = {}) {
-        if (!advancedSetRows || advancedSetRows.children.length >= 5) return;
-        advancedSetRowCounter += 1;
-        const row = document.createElement('div');
-        row.className = 'advanced-set-row';
-        row.dataset.rowId = String(advancedSetRowCounter);
-        const label = document.createElement('div'); label.className = 'advanced-row-label';
-        label.textContent = activeCreateSetType === 'superset' ? `Exercise ${advancedSetRows.children.length + 2}` : `Drop ${advancedSetRows.children.length + 1}`;
-        const exerciseWrap = document.createElement('div'); exerciseWrap.className = 'advanced-exercise-wrap';
-        const select = buildExerciseSelect(); select.value = values.exercise || '';
-        if (activeCreateSetType === 'dropset') { select.hidden = true; select.disabled = true; }
-        exerciseWrap.appendChild(select);
-        const fields = document.createElement('div'); fields.className = 'advanced-row-fields';
-        fields.innerHTML = `<input class="advanced-reps" type="number" min="1" max="1000" inputmode="numeric" placeholder="Reps" value="${values.repetitions || ''}"><input class="advanced-weight" type="number" min="0.01" max="10000" step="0.1" inputmode="decimal" placeholder="Weight kg" value="${values.weight || ''}"><input class="advanced-rpe" type="number" min="0" max="10" step="0.5" inputmode="decimal" placeholder="RPE" value="${values.rpe ?? ''}">`;
-        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'advanced-row-remove'; remove.textContent = 'Remove';
-        remove.addEventListener('click', () => { row.remove(); renumberAdvancedRows(); });
-        row.append(label, exerciseWrap, fields, remove); advancedSetRows.appendChild(row);
-      }
-      function renumberAdvancedRows() {
-        advancedSetRows?.querySelectorAll('.advanced-set-row').forEach((row,index) => {
-          const label = row.querySelector('.advanced-row-label');
-          if (label) label.textContent = activeCreateSetType === 'superset' ? `Exercise ${index + 2}` : `Drop ${index + 1}`;
-        });
-      }
-      function refreshAdvancedExerciseOptions() {
-        advancedSetRows?.querySelectorAll('.advanced-exercise-select').forEach((select) => {
-          const current = select.value; const replacement = buildExerciseSelect();
-          replacement.value = current; replacement.hidden = select.hidden; replacement.disabled = select.disabled; select.replaceWith(replacement);
-        });
-      }
-      function collectAdvancedRows() {
-        return Array.from(advancedSetRows?.querySelectorAll('.advanced-set-row') || []).map((row) => ({
-          exercise: row.querySelector('.advanced-exercise-select')?.value || '',
-          repetitions: Number.parseInt(row.querySelector('.advanced-reps')?.value, 10),
-          weight: Number.parseFloat(row.querySelector('.advanced-weight')?.value),
-          rpe: Number.parseFloat(row.querySelector('.advanced-rpe')?.value),
-        }));
-      }
-      function validateWorkoutRow(row, requireExercise = true) {
-        return (!requireExercise || !!row.exercise) && Number.isInteger(row.repetitions) && row.repetitions > 0 && row.repetitions <= 1000
-          && Number.isFinite(row.weight) && row.weight > 0 && row.weight <= 10000
-          && Number.isFinite(row.rpe) && row.rpe >= 0 && row.rpe <= 10;
-      }
-      async function nextSetNumbersForExercises(userId, entries, now) {
-        const result = new Map();
-        for (const entry of entries) {
-          if (!result.has(entry.exercise)) result.set(entry.exercise, await getNextSetNumberForDay(userId, entry.exercise, now));
-          entry.setNumber = result.get(entry.exercise);
-          result.set(entry.exercise, entry.setNumber + 1);
-        }
-      }
+      function groupId(prefix){return `${prefix}_${globalThis.crypto?.randomUUID?.()||Date.now()+'_'+Math.random().toString(36).slice(2)}`;}
+      function exerciseSelect(){const s=document.createElement('select');s.className='advanced-exercise-select';s.innerHTML='<option value="">Select exercise</option>';Array.from(clientSideExercisesMap.entries()).sort((a,b)=>a[1].localeCompare(b[1])).forEach(([k,n])=>{const o=document.createElement('option');o.value=k;o.textContent=n;s.appendChild(o)});return s;}
+      function syncDropExercise(){if(activeCreateSetType!=='dropset')return;const rows=[...advancedSetRows.querySelectorAll('.advanced-set-row')],v=rows[0]?.querySelector('select')?.value||'';rows.slice(1).forEach(r=>{const s=r.querySelector('select');s.value=v;s.disabled=true});}
+      function renumberAdvancedRows(){[...advancedSetRows.querySelectorAll('.advanced-set-row')].forEach((r,i)=>{r.querySelector('.advanced-row-label').textContent=activeCreateSetType==='superset'?`Exercise ${i+1}`:(i===0?'Main Set':`Drop ${i}`);r.querySelector('.advanced-row-remove').hidden=i===0});}
+      function addAdvancedRow(values={}){if(advancedSetRows.children.length>=6)return;const r=document.createElement('div');r.className='advanced-set-row';const label=document.createElement('div');label.className='advanced-row-label';const s=exerciseSelect();s.value=values.exercise||'';s.addEventListener('change',syncDropExercise);const fields=document.createElement('div');fields.className='advanced-row-fields';fields.innerHTML=`<input class="advanced-reps" type="number" min="1" max="1000" inputmode="numeric" placeholder="Reps" aria-label="Repetitions" value="${values.repetitions||''}"><input class="advanced-weight" type="number" min="0.01" max="10000" step="0.1" inputmode="decimal" placeholder="Weight kg" aria-label="Weight" value="${values.weight||''}"><input class="advanced-rpe" type="number" min="0" max="10" step="0.5" inputmode="decimal" placeholder="RPE" aria-label="RPE" value="${values.rpe??''}">`;const del=document.createElement('button');del.type='button';del.className='advanced-row-remove';del.textContent='Remove';del.onclick=()=>{r.remove();renumberAdvancedRows();syncDropExercise()};r.append(label,s,fields,del);advancedSetRows.appendChild(r);renumberAdvancedRows();syncDropExercise();}
+      function setCreateType(type){activeCreateSetType=type;setTypeSelector.querySelectorAll('button').forEach(b=>{const on=b.dataset.setType===type;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});const adv=type!=='normal';normalSetEditor.hidden=adv;advancedSetEditor.hidden=!adv;if(adv){advancedSetRows.innerHTML='';advancedSetHelp.textContent=type==='superset'?'Add at least two exercises. All exercises are saved together.':'The first row is the main set. Add reduced-weight drop stages.';addAdvancedSetRowButton.textContent=type==='superset'?'Add Exercise':'Add Drop';addAdvancedRow();addAdvancedRow()}else advancedSetRows.innerHTML='';}
+      function advancedEntries(){return [...advancedSetRows.querySelectorAll('.advanced-set-row')].map(r=>({exercise:r.querySelector('select').value,repetitions:parseInt(r.querySelector('.advanced-reps').value,10),weight:parseFloat(r.querySelector('.advanced-weight').value),rpe:parseFloat(r.querySelector('.advanced-rpe').value)}));}
+      function validEntry(e,needExercise=true){return(!needExercise||e.exercise)&&Number.isInteger(e.repetitions)&&e.repetitions>0&&e.repetitions<=1000&&Number.isFinite(e.weight)&&e.weight>0&&e.weight<=10000&&Number.isFinite(e.rpe)&&e.rpe>=0&&e.rpe<=10;}
       // ============================
       // Workout mutations
       // ============================
@@ -1255,49 +1169,8 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
         let highestSetNumber = 0; snapshot.forEach((doc) => { const candidate = Number.parseInt(doc.data().setNumber, 10); if (Number.isFinite(candidate)) highestSetNumber = Math.max(highestSetNumber, candidate); }); return highestSetNumber + 1;
       }
 
-      async function saveWorkoutEntry() {
-        const currentUser = auth.currentUser;
-        if (!currentUser) { showErrorMessage('Please log in first (Account).'); return; }
-        if (!validateCreateRequiredValues()) return;
-        setLinkSaving(createSaveButton, true, 'Save');
-        try {
-          const primary = resolveCreateExerciseFromUI();
-          const main = { exercise: primary.exerciseKey, exerciseDisplay: primary.exerciseDisplay, repetitions: parseInt(createRepetitionsInput.value,10), weight: parseFloat(createWeightInput.value), rpe: getRPEForCalculation(createRpeInput.value) };
-          if (!validateWorkoutRow(main)) throw new Error('Please enter valid values for exercise, repetitions, weight and RPE.');
-          const extras = collectAdvancedRows();
-          let entries = [main];
-          if (activeCreateSetType === 'superset') {
-            if (!extras.length || extras.some(row => !validateWorkoutRow(row))) throw new Error('A superset needs at least two complete exercises.');
-            entries = entries.concat(extras.map(row => ({ ...row, exerciseDisplay: getExerciseDisplayNameFromKey(row.exercise) })));
-          } else if (activeCreateSetType === 'dropset') {
-            if (!extras.length || extras.some(row => !validateWorkoutRow(row, false))) throw new Error('A drop set needs at least one complete drop stage.');
-            entries = entries.concat(extras.map(row => ({ ...row, exercise: main.exercise, exerciseDisplay: main.exerciseDisplay })));
-          }
-          const now = new Date(); const dayKey = getLocalDayKey(now);
-          await nextSetNumbersForExercises(currentUser.uid, entries, now);
-          const groupId = activeCreateSetType === 'normal' ? null : createGroupId(activeCreateSetType);
-          const batch = db.batch();
-          const exerciseWrites = new Map();
-          entries.forEach((entry,index) => {
-            const metrics = calculateWorkoutMetrics({ repetitions: entry.repetitions, weight: entry.weight, rpe: entry.rpe });
-            const workoutRef = db.collection('workouts').doc();
-            batch.set(workoutRef, { userId: currentUser.uid, exercise: entry.exercise, exerciseDisplay: entry.exerciseDisplay, repetitions: entry.repetitions, weight: entry.weight, setNumber: entry.setNumber, dayKey, rpe: entry.rpe, e1RM: metrics.e1RM, intensityVolume: metrics.intensityVolume, timestamp: firebase.firestore.Timestamp.fromDate(new Date(now.getTime() + index)), setType: activeCreateSetType, groupId, groupPosition: groupId ? index + 1 : null });
-            exerciseWrites.set(entry.exercise, entry.exerciseDisplay);
-          });
-          exerciseWrites.forEach((name,key) => batch.set(db.collection('users').doc(currentUser.uid).collection('exercises').doc(key), { name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }));
-          await batch.commit();
-          clearCreateInlineMessage(); await loadExercises(); await refreshWorkoutCache(currentUser.uid); refreshAutocompleteLists();
-          activeExerciseKey = main.exercise; closeCreateModal(); activateTab('progress');
-          await syncExerciseAcrossTabs(main.exercise, { forceLatestSets: true, activateProgressTab: false }); renderOverallChartAndExercisesList();
-          showSuccessMessage(activeCreateSetType === 'normal' ? `Saved "${main.exerciseDisplay}".` : `Saved ${activeCreateSetType === 'superset' ? 'superset' : 'drop set'} with ${entries.length} entries.`);
-        } catch (error) { console.error('Create save error:', error); showCreateInlineMessage(error.message); showErrorMessage(error.message); }
-        finally { setLinkSaving(createSaveButton, false, 'Save'); }
-      }
-      function openCreateModal() {
-        if (!auth.currentUser) { showErrorMessage('Please log in first (Account).'); return; }
-        createModal.classList.add('open'); showElementForA11y(createModal); createExerciseSearch.value=''; createRepetitionsInput.value=''; createWeightInput.value=''; createRpeInput.value='';
-        setCreateSetType('normal'); clearCreateInlineMessage(); setLinkSaving(createSaveButton, false, 'Save'); setTimeout(() => createExerciseSearch.focus(), 60);
-      }
+      async function saveWorkoutEntry(){const u=auth.currentUser;if(!u){showErrorMessage('Please log in first (Account).');return}if(activeCreateSetType==='normal'&&!validateCreateRequiredValues())return;setLinkSaving(createSaveButton,true,'Save');try{let entries=[];if(activeCreateSetType==='normal'){const p=resolveCreateExerciseFromUI();entries=[{exercise:p.exerciseKey,exerciseDisplay:p.exerciseDisplay,repetitions:parseInt(createRepetitionsInput.value,10),weight:parseFloat(createWeightInput.value),rpe:getRPEForCalculation(createRpeInput.value)}];if(!validEntry(entries[0]))throw Error('Please enter valid values.')}else{const rows=advancedEntries();if(activeCreateSetType==='superset'){if(rows.length<2||rows.some(e=>!validEntry(e)))throw Error('A superset needs at least two complete exercises.');entries=rows.map(e=>({...e,exerciseDisplay:getExerciseDisplayNameFromKey(e.exercise)}))}else{if(rows.length<2||!validEntry(rows[0])||rows.slice(1).some(e=>!validEntry(e,false)))throw Error('A drop set needs a complete main set and at least one complete drop.');const ex=rows[0].exercise,name=getExerciseDisplayNameFromKey(ex);entries=rows.map(e=>({...e,exercise:ex,exerciseDisplay:name}))}}const now=new Date(), dayKey=getLocalDayKey(now), gid=activeCreateSetType==='normal'?null:groupId(activeCreateSetType), batch=db.batch(), next=new Map(), exercises=new Map();for(let i=0;i<entries.length;i++){const e=entries[i];if(!next.has(e.exercise))next.set(e.exercise,await getNextSetNumberForDay(u.uid,e.exercise,now));e.setNumber=next.get(e.exercise);next.set(e.exercise,e.setNumber+1);const m=calculateWorkoutMetrics({repetitions:e.repetitions,weight:e.weight,rpe:e.rpe}),ref=db.collection('workouts').doc();batch.set(ref,{userId:u.uid,exercise:e.exercise,exerciseDisplay:e.exerciseDisplay,repetitions:e.repetitions,weight:e.weight,setNumber:e.setNumber,dayKey,rpe:e.rpe,e1RM:m.e1RM,intensityVolume:m.intensityVolume,timestamp:firebase.firestore.Timestamp.fromDate(new Date(now.getTime()+i)),setType:activeCreateSetType,groupId:gid,groupPosition:gid?i+1:null});exercises.set(e.exercise,e.exerciseDisplay)}exercises.forEach((name,key)=>batch.set(db.collection('users').doc(u.uid).collection('exercises').doc(key),{name,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));await batch.commit();await loadExercises();await refreshWorkoutCache(u.uid);refreshAutocompleteLists();activeExerciseKey=entries[0].exercise;closeCreateModal();activateTab('progress');await syncExerciseAcrossTabs(activeExerciseKey,{forceLatestSets:true,activateProgressTab:false});renderOverallChartAndExercisesList();showSuccessMessage(`Saved ${activeCreateSetType==='normal'?entries[0].exerciseDisplay:activeCreateSetType==='superset'?'superset':'drop set'}.`)}catch(e){console.error(e);showCreateInlineMessage(e.message);showErrorMessage(e.message)}finally{setLinkSaving(createSaveButton,false,'Save')}}
+      function openCreateModal() { if (!auth.currentUser) { showErrorMessage('Please log in first (Account).'); return; } createModal.classList.add('open'); showElementForA11y(createModal); createExerciseSearch.value=''; createRepetitionsInput.value=''; createWeightInput.value=''; createRpeInput.value=''; setCreateType('normal'); clearCreateInlineMessage(); setLinkSaving(createSaveButton, false, 'Save'); setTimeout(() => createExerciseSearch.focus(), 60); }
       async function saveEditedWorkout() {
         if (!editWorkoutId || !validateEditRequiredValues()) return;
         const repetitions=Number(editRepsInput.value), weight=Number(editWeightInput.value), rpe=Number(editRpeInput.value);
@@ -1553,8 +1426,8 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
         inputEl.addEventListener('keydown', async (e) => { if (e.key !== 'Enter') return; e.preventDefault(); if (hasCreateRequiredValues()) await saveWorkoutEntry(); else { showCreateInlineMessage('Please enter all values before saving.'); showErrorMessage('Please enter all values before saving.'); } });
         inputEl.addEventListener('input', () => { if (hasCreateRequiredValues()) clearCreateInlineMessage(); });
       });
-      setTypeSelector?.addEventListener('click', (event) => { const button = event.target.closest('.set-type-btn'); if (button) setCreateSetType(button.dataset.setType); });
-      addAdvancedSetRowButton?.addEventListener('click', () => addAdvancedSetRow());
+      setTypeSelector.addEventListener('click',e=>{const b=e.target.closest('.set-type-btn');if(b)setCreateType(b.dataset.setType)});
+      addAdvancedSetRowButton.addEventListener('click',()=>addAdvancedRow());
       createSaveButton.addEventListener('click', saveWorkoutEntry);
       fabCreate.addEventListener('click', openCreateModal);
       fabExerciseLog.addEventListener('click', () => openExerciseLogSheet({ returnToDrawer: false }));
