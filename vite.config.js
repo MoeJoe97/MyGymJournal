@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/MyGymJournal/",
-  build: { outDir: "dist", sourcemap: true }
+  base: "/",
+  build: {
+    outDir: "dist",
+    sourcemap: true,
+  },
 });
