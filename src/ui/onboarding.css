@@ -1,4 +1,7 @@
 :root { --z-tutorial: 2147483647; }
+#tutorialPortalRoot[hidden] { display: none !important; }
+#tutorialPortalRoot:not(.is-active) { visibility: hidden; opacity: 0; pointer-events: none; }
+#tutorialPortalRoot.is-active { visibility: visible; opacity: 1; }
 #tutorialPortalRoot {
   position: fixed;
   inset: 0;

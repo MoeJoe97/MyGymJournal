@@ -357,6 +357,7 @@ setupPwa();
         removeHomeMessageElement();
       }
       function openLoginOverlay(prefillEmail = "") {
+       onboarding?.close({ saveDismissal: false });
        if (verificationNoticeOverlay) {
         verificationNoticeOverlay.classList.remove('open');
         hideElementForA11y(verificationNoticeOverlay);
@@ -1572,7 +1573,7 @@ setupPwa();
       menuSets.addEventListener('click', () => { activateTab('sets'); closeDrawer(); });
       menuExerciseLog.addEventListener('click', () => { closeDrawer(); openExerciseLogSheet({ returnToDrawer: true }); });
       menuAccount.addEventListener('click', openAccountSheet);
-      menuTutorial?.addEventListener('click', () => { closeDrawer(); onboarding?.replay(); });
+      menuTutorial?.addEventListener('click', async () => { if (!auth.currentUser) { openLoginOverlay(); return; } closeDrawer(); closeAccountSheet(); closeExerciseLogSheet(); activateTab('training'); await onboarding?.replay(); });
 
       tabTraining.addEventListener('click', () => activateTab('training'));
       tabProgress.addEventListener('click', () => activateTab('progress'));
@@ -1645,9 +1646,12 @@ setupPwa();
       attachSheetSwipeToClose(accountSheet, closeAccountSheet);
 
       auth.onAuthStateChanged(async (user) => {
-       // Firebase may restore LOCAL persistence asynchronously. Wait before
-       // deciding whether the login overlay should be displayed.
        await authPersistenceReady;
+       if (!user) {
+        onboarding?.close({ saveDismissal: false });
+        syncUiForLoggedOutUser();
+        return;
+       }
        if (user) {
         if (!user.emailVerified) {
          if (isRegisteringAccount) return;
@@ -1660,9 +1664,7 @@ setupPwa();
          return;
         }
         await syncUiForAuthenticatedUser(user);
-       if (onboarding) requestAnimationFrame(() => onboarding.start(user));
-       } else {
-        syncUiForLoggedOutUser();
+        if (onboarding && auth.currentUser?.uid === user.uid) requestAnimationFrame(() => onboarding.start({ source: "automatic", user }));
        }
       });
       setActiveButtons(rangeFilterDiv, activeRangeTraining);
