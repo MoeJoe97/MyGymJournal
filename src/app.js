@@ -1,6 +1,8 @@
 import { firebaseConfig } from "./config/firebase-config.js";
 import { calculateWorkoutMetrics } from "./domain/workout-metrics.js";
 import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
+import { createOnboarding } from "./ui/onboarding.js";
+import "./ui/onboarding.css";
 
 // ============================
       // Firebase Config + Init
@@ -8,6 +10,12 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
+
+      // Set Firebase compat persistence before any sign-in call so sessions survive
+      // browser restarts without manually storing credentials or tokens.
+      const authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
+       console.error('[auth] Local persistence could not be enabled:', error);
+      });
       const appShell = document.querySelector(".app");
 
       // ============================
@@ -38,6 +46,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       const accountSaveEditBtn = document.getElementById("accountSaveEditBtn");
       const accountCancelEditBtn = document.getElementById("accountCancelEditBtn");
       const accountResetPasswordBtn = document.getElementById("accountResetPasswordBtn");
+      const replayTutorialButton = document.getElementById("replayTutorialButton");
       const accountDeleteBtn = document.getElementById("accountDeleteBtn");
       const logoutButton = document.getElementById("logoutButton");
 
@@ -1271,6 +1280,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       // Auth
       // ============================
       async function loginFromOverlay() {
+       await authPersistenceReady;
        const email = loginEmailOverlay.value.trim();
        const password = loginPasswordOverlay.value;
        clearAuthInlineErrors();
@@ -1372,6 +1382,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       }
 
       async function resendVerificationEmail() {
+        await authPersistenceReady;
         if (!pendingVerificationEmail || !pendingVerificationPassword) { alert('Please log in with your email and password first so the app can resend the verification email.'); return; }
         try {
           const cred = await auth.signInWithEmailAndPassword(pendingVerificationEmail, pendingVerificationPassword);
@@ -1523,6 +1534,9 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       attachSheetSwipeToClose(accountSheet, closeAccountSheet);
 
       auth.onAuthStateChanged(async (user) => {
+       // Firebase may restore LOCAL persistence asynchronously. Wait before
+       // deciding whether the login overlay should be displayed.
+       await authPersistenceReady;
        if (user) {
         if (!user.emailVerified) {
          if (isRegisteringAccount) return;
@@ -1535,6 +1549,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
          return;
         }
         await syncUiForAuthenticatedUser(user);
+       if (onboarding) requestAnimationFrame(() => onboarding.start(user));
        } else {
         syncUiForLoggedOutUser();
        }
@@ -1654,6 +1669,32 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       [featureDom.recordsSheet,featureDom.statsSheet,featureDom.weightSheet,featureDom.weightModal].forEach(el=>hideElementForA11y(el));
       if (featureDom.weightModal) { featureDom.weightModal.classList.remove('open'); featureDom.weightModal.style.display='none'; featureDom.weightModal.style.visibility='hidden'; featureDom.weightModal.style.pointerEvents='none'; }
       updateFeatureProgress();
+
+      const onboarding = createOnboarding({
+       auth,
+       navigation: async (destination) => {
+        closeDrawer();
+        if (destination === 'home') activateTab('training');
+        if (destination === 'progress') activateTab('progress');
+        if (destination === 'sets') activateTab('sets');
+        if (destination === 'progress' && activeExerciseKey) await renderProgressChartsForExercise(activeExerciseKey);
+        if (destination === 'sets' && activeExerciseKey) await renderSetsChartsForExercise(activeExerciseKey, null, true);
+       },
+       closeTransientUi: () => {
+        closeDrawer(); closeAccountSheet(); closeExerciseLogSheet();
+        closeBottomSheet(featureDom.recordsSheet); closeBottomSheet(featureDom.statsSheet); closeBottomSheet(featureDom.weightSheet);
+        closeFeatureWeightModal();
+       },
+       openCreate: () => { openCreateModal(); },
+       closeCreate: closeCreateModal,
+       openWeight: async () => {
+        if (!auth.currentUser) return;
+        await loadFeatureBodyWeights(auth.currentUser.uid);
+        openFeatureSheet(featureDom.weightSheet, renderFeatureWeight);
+       },
+       closeWeight: () => closeBottomSheet(featureDom.weightSheet)
+      });
+      replayTutorialButton?.addEventListener('click', () => { closeAccountSheet(); onboarding?.replay(); });
 
       // Override account deletion cleanup to include body weight entries as well.
       async function deleteUserOwnedData(uid) {

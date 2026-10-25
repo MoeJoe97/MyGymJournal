@@ -43,7 +43,7 @@
             <div id="loginHintTraining" class="login-hint" style="display: none; margin-top: 12px">
               You are not logged in. Use <b>Account</b> to log in.
             </div>
-            <div id="progressSummaryCard" class="progress-summary">
+            <div id="progressSummaryCard" class="progress-summary" data-tour="overall-progress">
               <div class="progress-summary-top">
                 <div class="progress-summary-title">Overall Progress</div>
                 <div id="overallProgressValue" class="progress-summary-value">—</div>
@@ -60,7 +60,7 @@
               <button type="button" class="range-btn active" data-range="max">Max</button>
             </div>
             <div class="chart-wrap"><canvas id="overallChart"></canvas></div>
-            <div class="exercises-header">
+            <div class="exercises-header" data-tour="exercise-selection">
               <h3 style="margin: 18px 0 0 0">Exercises</h3>
               <div class="sort-wrap">
                 <button id="sortButton" class="link-btn muted" type="button">Sort</button>
@@ -102,7 +102,7 @@
                 <button id="showProgressChartsButton" class="link-btn accent auto-hidden-btn" type="button">Show</button>
               </div>
             </div>
-            <div class="chart-wrap"><canvas id="ivPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume</div><div class="chart-info-desc">Total training volume per day, weighted by intensity.</div></div></div>
+            <div class="chart-wrap" data-tour="progress-charts"><canvas id="ivPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume</div><div class="chart-info-desc">Total training volume per day, weighted by intensity.</div></div></div>
             <div class="chart-wrap"><canvas id="e1rmPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Estimated 1RM</div><div class="chart-info-desc">Highest estimated one-rep max achieved per training day.</div></div></div>
             <div class="chart-wrap"><canvas id="maxWeightPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Max Weight</div><div class="chart-info-desc">Highest weight lifted on each training day.</div></div></div>
             <div class="chart-wrap"><canvas id="volumePerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Training Volume</div><div class="chart-info-desc">Total volume per day calculated as weight multiplied by repetitions.</div></div></div>
@@ -132,14 +132,25 @@
                 <button id="showSetsChartsButton" class="link-btn accent auto-hidden-btn" type="button">Show</button>
               </div>
             </div>
-            <div class="sets-meta" id="setsMetaLine"><span>Selected day: <b id="setsSelectedDayLabel">—</b></span><span>Latest day: <b id="setsLatestDayLabel">—</b></span></div>
-            <div class="chart-wrap"><canvas id="ivPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume per Set</div><div class="chart-info-desc">Intensity-adjusted training volume for each individual set.</div></div></div>
+            <div class="sets-meta" id="setsMetaLine" data-tour="sets-date"><span>Selected day: <b id="setsSelectedDayLabel">—</b></span><span>Latest day: <b id="setsLatestDayLabel">—</b></span></div>
+            <div class="chart-wrap" data-tour="sets-charts"><canvas id="ivPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume per Set</div><div class="chart-info-desc">Intensity-adjusted training volume for each individual set.</div></div></div>
             <div class="chart-wrap"><canvas id="e1rmPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Estimated 1RM per Set</div><div class="chart-info-desc">Estimated one-rep max calculated for each set.</div></div></div>
             <div class="chart-wrap"><canvas id="maxWeightPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Weight per Set</div><div class="chart-info-desc">Weight used in each individual set on the selected day.</div></div></div>
             <div class="chart-wrap"><canvas id="volumePerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Volume per Set</div><div class="chart-info-desc">Training volume per set calculated as weight multiplied by repetitions.</div></div></div>
             <div class="chart-wrap"><canvas id="repsPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Repetitions per Set</div><div class="chart-info-desc">Number of repetitions completed in each set.</div></div></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="onboardingOverlay" class="onboarding-overlay" aria-hidden="true">
+      <div id="onboardingSpotlight" class="onboarding-spotlight" aria-hidden="true"></div>
+      <button id="onboardingClose" class="onboarding-close" type="button" aria-label="Close tutorial">×</button>
+      <div id="onboardingCard" class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" aria-describedby="onboardingDescription">
+        <div id="onboardingStepIndicator" class="onboarding-step">1 of 5</div>
+        <h2 id="onboardingTitle">Your training overview</h2>
+        <p id="onboardingDescription"></p>
+        <button id="onboardingContinue" class="onboarding-continue" type="button" aria-label="Continue tutorial">→</button>
       </div>
     </div>
 
@@ -165,7 +176,7 @@
       </ul></div>
     </aside>
 
-    <div id="createModal" class="modal" aria-hidden="true">
+      <div id="createModal" class="modal" aria-hidden="true" data-tour="create-content">
       <div class="modal-overlay" id="createModalOverlay"></div><div class="modal-panel">
         <div class="modal-header"><div class="modal-title">Create Workout Entry</div><button id="createModalClose" class="modal-close" type="button">Close</button></div>
         <p class="subtle" style="margin-bottom: 8px">Create a new entry. Set number is assigned automatically per day &amp; exercise.</p>
@@ -234,6 +245,7 @@
         <button id="accountEditToggleBtn" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Edit Account</button>
         <button id="accountSaveEditBtn" class="account-action-btn accent" type="button" hidden style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--accent);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Save Account</button>
         <button id="accountCancelEditBtn" class="account-action-btn danger" type="button" hidden style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Cancel changes</button>
+        <button id="replayTutorialButton" class="account-action-btn neutral" type="button">Replay app tutorial</button>
         <button id="accountResetPasswordBtn" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Reset password</button>
         <button id="logoutButton" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Log out</button>
         <button id="accountDeleteBtn" class="account-action-btn danger" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Close account</button>
@@ -247,7 +259,7 @@
 
     <div id="statisticsSheet" class="sheet" aria-hidden="true"><div class="sheet-handle"></div><div class="sheet-header"><div class="headline">Statistics</div><button id="closeStatisticsBtn" class="link-btn muted" type="button">Close</button></div><div class="sheet-body"><div class="card sheet-card"><p class="subtle">General training statistics based on your saved workout entries.</p><div id="statisticsMetricGrid" class="metric-card-grid"></div><ul id="statisticsList" class="stats-list"></ul></div></div></div>
 
-    <div id="weightTrackingSheet" class="sheet" aria-hidden="true"><div class="sheet-handle"></div><div class="sheet-header"><div class="headline">Weight Tracking</div><button id="closeWeightTrackingBtn" class="link-btn muted" type="button">Close</button></div><div class="sheet-body"><div class="card sheet-card"><p class="subtle">Track your body weight over time.</p><div class="weight-chart-actions"><button id="openWeightEntryButton" class="link-btn accent" type="button">Enter Weight</button></div><div class="chart-wrap"><canvas id="bodyWeightChart"></canvas></div><ul id="weightEntriesList" class="weight-list"></ul></div></div></div>
+    <div id="weightTrackingSheet" class="sheet" aria-hidden="true" data-tour="weight-content"><div class="sheet-handle"></div><div class="sheet-header"><div class="headline">Weight Tracking</div><button id="closeWeightTrackingBtn" class="link-btn muted" type="button">Close</button></div><div class="sheet-body"><div class="card sheet-card"><p class="subtle">Track your body weight over time.</p><div class="weight-chart-actions"><button id="openWeightEntryButton" class="link-btn accent" type="button">Enter Weight</button></div><div class="chart-wrap"><canvas id="bodyWeightChart"></canvas></div><ul id="weightEntriesList" class="weight-list"></ul></div></div></div>
 
     <div id="weightEntryModal" class="modal" aria-hidden="true"><div class="modal-overlay" id="weightEntryModalOverlay"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">Enter Weight</div><button id="weightEntryModalClose" class="modal-close" type="button">Close</button></div><label for="weightEntryDateInput">Date</label><input id="weightEntryDateInput" type="date" /><label for="weightEntryValueInput">Weight (kg)</label><input id="weightEntryValueInput" type="number" step="0.1" placeholder="e.g. 82.5" /><div id="weightEntryValidationMessage" class="inline-form-message" style="display:none;"></div><div class="actions" style="margin-top: 12px"><button id="saveWeightEntryButton" class="link-btn accent" type="button">Save</button><button id="cancelWeightEntryButton" class="link-btn muted" type="button">Cancel</button></div></div></div>
 
