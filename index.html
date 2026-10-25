@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="description" content="Track workouts, charts, personal records, and training progress." />
     <title>Training Journal</title>
@@ -52,6 +56,7 @@
                 Progress is calculated from the first and latest training day in the selected range.
               </div>
             </div>
+            <div class="training-actions"><button id="startTrainingModeButton" class="link-btn muted" type="button">Start training mode</button><span id="trainingModeStatus" class="save-status" aria-live="polite"></span></div>
             <div id="rangeFilter" data-tour="training-period-selector">
               <button type="button" class="range-btn" data-range="day">Day</button>
               <button type="button" class="range-btn" data-range="week">Week</button>
@@ -246,12 +251,15 @@
         <button id="accountEditToggleBtn" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Edit Account</button>
         <button id="accountSaveEditBtn" class="account-action-btn accent" type="button" hidden style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--accent);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Save Account</button>
         <button id="accountCancelEditBtn" class="account-action-btn danger" type="button" hidden style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Cancel changes</button>
+        <div class="account-section-title">Training preferences</div><div class="settings-grid"><label for="weightUnitSelect">Weight unit</label><select id="weightUnitSelect"><option value="kg">kg</option><option value="lb">lb</option></select><label for="defaultPeriodSelect">Default chart period</label><select id="defaultPeriodSelect"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option><option value="year">Year</option><option value="max">Max</option></select><label for="restDurationSelect">Default rest time</label><select id="restDurationSelect"><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option><option value="180">180 seconds</option></select><label for="installAppButton">App</label><button id="installAppButton" class="account-action-btn neutral" type="button" hidden>Install app</button></div>
         <button id="accountResetPasswordBtn" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Reset password</button>
         <button id="logoutButton" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Log out</button>
         <button id="accountDeleteBtn" class="account-action-btn danger" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Close account</button>
       </div></div>
       <div class="account-section card" id="accountLoggedOutSection" style="display:none;"><div class="account-section-title">Not logged in</div><p class="subtle">Use the login / registration overlay to sign in or create a new account.</p></div>
     </div></div></div>
+
+    <div id="trainingModeSheet" class="sheet" aria-hidden="true"><div class="sheet-handle"></div><div class="sheet-header"><div class="headline">Training mode</div><button id="leaveTrainingModeButton" class="link-btn muted" type="button">Leave</button></div><div class="sheet-body"><div class="training-mode-shell"><div class="training-mode-meta"><select id="trainingModeExercise" aria-label="Training exercise"><option value="">Select an exercise</option></select><span id="trainingModeDate"></span></div><div id="previousSessionCard" class="previous-session-card" hidden></div><div id="suggestedSetCard" class="suggested-set-card" hidden></div><div id="restTimerCard" class="rest-timer-card"><strong id="restTimerValue">Ready</strong><span id="restTimerState">Rest timer</span><button id="restTimerAddButton" type="button">+30 sec</button><button id="restTimerPauseButton" type="button">Pause</button></div><div id="trainingSetList" class="training-set-list"></div><button id="addTrainingSetButton" class="link-btn accent" type="button">Add another set</button><button id="finishTrainingButton" class="link-btn muted" type="button">Finish training</button></div></div></div></div>
 
     <div id="exerciseLogSheet" class="sheet" aria-hidden="true"><div class="sheet-handle"></div><div class="sheet-header"><div class="headline">Exercise Log</div><button id="closeExerciseLogBtn" class="link-btn muted" type="button">Close</button></div><div class="sheet-body"><ul id="exerciseLogList"></ul></div></div>
 

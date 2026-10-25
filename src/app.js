@@ -3,6 +3,9 @@ import { calculateWorkoutMetrics } from "./domain/workout-metrics.js";
 import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
 import { createOnboarding } from "./ui/onboarding.js";
 import "./ui/onboarding.css";
+import "./pwa.css";
+import { setupPwa } from "./pwa.js";
+import { createTrainingMode } from "./training-mode.js";
 
 // ============================
       // Firebase Config + Init
@@ -17,6 +20,10 @@ import "./ui/onboarding.css";
        console.error('[auth] Local persistence could not be enabled:', error);
       });
       const appShell = document.querySelector(".app");
+      setupPwa();
+      window.addEventListener('gymjournal:install-available', () => { if (installAppButton) installAppButton.hidden = false; });
+      window.addEventListener('gymjournal:installed', () => { if (installAppButton) installAppButton.hidden = true; });
+      installAppButton?.addEventListener('click', () => window.installGymJournal?.());
 
       // ============================
       // DOM Elements
@@ -46,6 +53,10 @@ import "./ui/onboarding.css";
       const accountSaveEditBtn = document.getElementById("accountSaveEditBtn");
       const accountCancelEditBtn = document.getElementById("accountCancelEditBtn");
       const accountResetPasswordBtn = document.getElementById("accountResetPasswordBtn");
+      const weightUnitSelect = document.getElementById('weightUnitSelect');
+      const defaultPeriodSelect = document.getElementById('defaultPeriodSelect');
+      const restDurationSelect = document.getElementById('restDurationSelect');
+      const installAppButton = document.getElementById('installAppButton');
       const accountDeleteBtn = document.getElementById("accountDeleteBtn");
       const logoutButton = document.getElementById("logoutButton");
 
@@ -108,6 +119,20 @@ import "./ui/onboarding.css";
 
       const fabCreate = document.getElementById("fabCreate");
       const fabExerciseLog = document.getElementById("fabExerciseLog");
+      const startTrainingModeButton = document.getElementById('startTrainingModeButton');
+      const trainingModeSheet = document.getElementById('trainingModeSheet');
+      const trainingModeExercise = document.getElementById('trainingModeExercise');
+      const suggestedSetCard = document.getElementById('suggestedSetCard');
+      const trainingModeDate = document.getElementById('trainingModeDate');
+      const trainingSetList = document.getElementById('trainingSetList');
+      const restTimerValue = document.getElementById('restTimerValue');
+      const restTimerState = document.getElementById('restTimerState');
+      const restTimerAddButton = document.getElementById('restTimerAddButton');
+      const restTimerPauseButton = document.getElementById('restTimerPauseButton');
+      const addTrainingSetButton = document.getElementById('addTrainingSetButton');
+      const finishTrainingButton = document.getElementById('finishTrainingButton');
+      const leaveTrainingModeButton = document.getElementById('leaveTrainingModeButton');
+      const previousSessionCard = document.getElementById('previousSessionCard');
       const createModal = document.getElementById("createModal");
       const createModalOverlay = document.getElementById("createModalOverlay");
       const createModalClose = document.getElementById("createModalClose");
@@ -970,7 +995,7 @@ import "./ui/onboarding.css";
       function closeBottomSheet(sheetEl) { blurActiveElement(); const shouldReturnToDrawer = sheetEl.dataset.returnToDrawer === 'true'; sheetEl.classList.remove('open'); hideElementForA11y(sheetEl); sheetEl.dataset.returnToDrawer = 'false'; if (shouldReturnToDrawer) openDrawer(); }
       function openExerciseLogSheet({ returnToDrawer = false } = {}) { openBottomSheet(exerciseLogSheet, { returnToDrawer }); renderExerciseLog(); }
       function closeExerciseLogSheet() { closeBottomSheet(exerciseLogSheet); }
-      function openAccountSheet() { closeDrawer(); forceAccountButtonsToViewMode(); setAccountEditMode(false); openBottomSheet(accountSheet, { returnToDrawer: false }); loadCurrentUserProfile().then(() => { forceAccountButtonsToViewMode(); setAccountEditMode(false); }).catch(console.error); }
+      function openAccountSheet() { closeDrawer(); forceAccountButtonsToViewMode(); setAccountEditMode(false); if (weightUnitSelect) weightUnitSelect.value = localStorage.getItem('gymJournal:weightUnit') || 'kg'; if (defaultPeriodSelect) defaultPeriodSelect.value = localStorage.getItem('gymJournal:defaultPeriod') || 'max'; if (restDurationSelect) restDurationSelect.value = localStorage.getItem('gymJournal:restDuration') || '90'; openBottomSheet(accountSheet, { returnToDrawer: false }); loadCurrentUserProfile().then(() => { forceAccountButtonsToViewMode(); setAccountEditMode(false); }).catch(console.error); }
       function closeAccountSheet() { closeBottomSheet(accountSheet); }
       function returnToExerciseLog() { editWorkoutModal.classList.remove('open'); hideElementForA11y(editWorkoutModal); editWorkoutId = null; openBottomSheet(exerciseLogSheet, { returnToDrawer: false }); renderExerciseLog(); }
       function openEditWorkoutModal(item) { exerciseLogSheet.classList.remove('open'); exerciseLogSheet.setAttribute('aria-hidden','true'); hideElementForA11y(exerciseLogSheet); editWorkoutId=item.id; editExerciseInput.value=item.exerciseDisplay || item.exercise; editRepsInput.value=item.repetitions; editWeightInput.value=item.weight; editRpeInput.value=item.rpe ?? ''; editWorkoutModal.classList.add('open'); showElementForA11y(editWorkoutModal); }
@@ -1277,6 +1302,62 @@ import "./ui/onboarding.css";
       }
 
       // ============================
+      // Optional active training mode
+      // ============================
+      let trainingMode = null;
+      function renderTrainingMode(state) {
+       if (!trainingSetList) return;
+       const exerciseOptions = Array.from(clientSideExercisesMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+       trainingModeExercise.innerHTML = '<option value="">Select an exercise</option>' + exerciseOptions.map(([key, name]) => `<option value="${key}">${name}</option>`).join('');
+       trainingModeExercise.value = state.exercise || '';
+       trainingModeExercise.onchange = () => { trainingMode.setExercise(trainingModeExercise.value); renderTrainingMode(state); };
+       trainingModeDate.textContent = state.date || new Date().toISOString().slice(0, 10);
+       const previous = state.exercise ? cachedAllWorkouts.filter((item) => item.exercise === state.exercise && item.dayKey !== state.date).sort((a, b) => b.timestamp - a.timestamp) : [];
+       const previousDay = previous.length ? getLocalDayKey(previous[0].timestamp) : '';
+       const previousSets = previous.filter((item) => getLocalDayKey(item.timestamp) === previousDay).slice().sort((a, b) => Number(a.setNumber) - Number(b.setNumber));
+       previousSessionCard.hidden = !previousSets.length;
+       previousSessionCard.innerHTML = previousSets.length ? `<strong>Last session</strong><span>${previousSets.map((item) => `${item.weight} kg × ${item.repetitions}`).join(' · ')}</span>` : '';
+       const suggestion = previousSets[0];
+       suggestedSetCard.hidden = !suggestion;
+       suggestedSetCard.innerHTML = suggestion ? `<strong>Suggestion</strong><span>${suggestion.weight} kg × ${suggestion.repetitions}</span><button type="button" id="useTrainingSuggestion">Use suggestion</button>` : '';
+       suggestedSetCard.querySelector('#useTrainingSuggestion')?.addEventListener('click', () => { const set = state.sets[state.sets.length - 1] || trainingMode.addSet(); trainingMode.updateSet(set.id, { weight: suggestion.weight, repetitions: suggestion.repetitions }); renderTrainingMode(state); });
+       trainingSetList.innerHTML = '';
+       state.sets.forEach((set, index) => {
+        const row = document.createElement('div'); row.className = 'training-set-row';
+        row.innerHTML = `<span class="training-set-number">${index + 1}</span><input class="training-set-weight" type="number" inputmode="decimal" placeholder="kg" value="${set.weight}"><input class="training-set-reps" type="number" inputmode="numeric" placeholder="reps" value="${set.repetitions}"><span class="training-set-status">${set.status === 'complete' ? 'Saved' : 'Incomplete'}</span>`;
+        const [weight, reps] = row.querySelectorAll('input');
+        weight.addEventListener('input', () => trainingMode.updateSet(set.id, { weight: weight.value }));
+        reps.addEventListener('input', () => trainingMode.updateSet(set.id, { repetitions: reps.value }));
+        row.querySelector('.training-set-status').textContent = set.status === 'complete' ? 'Saved' : 'Incomplete';
+        trainingSetList.appendChild(row);
+       });
+       if (!state.sets.length) trainingSetList.innerHTML = '<div class="empty-state"><strong>Add your first set</strong><span>Enter weight or repetitions first. Partial sets remain visible until completed.</span></div>';
+      }
+      async function saveTrainingState(state) {
+       if (!auth.currentUser || !state.exercise) return;
+       const completed = state.sets.filter((set) => set.status === 'complete');
+       for (const set of completed) {
+        if (set.firestoreId) continue;
+        const reps = Number(set.repetitions), weight = Number(set.weight), rpe = 0;
+        const metrics = calculateWorkoutMetrics({ repetitions: reps, weight, rpe });
+        const ref = db.collection('workouts').doc();
+        await ref.set({ userId: auth.currentUser.uid, exercise: state.exercise, exerciseDisplay: getExerciseDisplayNameFromKey(state.exercise), repetitions: reps, weight, rpe, e1RM: metrics.e1RM, intensityVolume: metrics.intensityVolume, setNumber: String(state.sets.indexOf(set) + 1), dayKey: state.date, timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${state.date}T12:00:00`)), setType: 'normal', trainingMode: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        set.firestoreId = ref.id;
+       }
+       await refreshWorkoutCache(auth.currentUser.uid);
+       renderOverallChartAndExercisesList();
+       document.getElementById('trainingModeStatus').textContent = 'Saved';
+      }
+      function updateTrainingTimer({ detail }) { if (!restTimerValue) return; const seconds = Math.max(0, detail.remaining); restTimerValue.textContent = seconds ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : 'Rest complete'; restTimerState.textContent = detail.paused ? 'Paused' : seconds ? 'Rest timer' : 'Ready for the next set'; }
+      document.addEventListener('gymjournal:timer', updateTrainingTimer);
+      startTrainingModeButton?.addEventListener('click', () => { if (!auth.currentUser) { openLoginOverlay(); return; } trainingMode?.start(activeExerciseKey || ''); openBottomSheet(trainingModeSheet); if (!trainingMode.state.sets.length) trainingMode.addSet(); renderTrainingMode(trainingMode.state); });
+      addTrainingSetButton?.addEventListener('click', () => { trainingMode.addSet(); renderTrainingMode(trainingMode.state); });
+      finishTrainingButton?.addEventListener('click', async () => { await trainingMode.finish(); closeBottomSheet(trainingModeSheet); showSuccessMessage('Training session saved.'); });
+      leaveTrainingModeButton?.addEventListener('click', async () => { await trainingMode.leave(); closeBottomSheet(trainingModeSheet); });
+      restTimerAddButton?.addEventListener('click', () => trainingMode?.addRest(30));
+      restTimerPauseButton?.addEventListener('click', () => { trainingMode?.pause(); restTimerPauseButton.textContent = trainingMode.state.timer.paused ? 'Resume' : 'Pause'; });
+
+      // ============================
       // Auth
       // ============================
       async function loginFromOverlay() {
@@ -1483,6 +1564,9 @@ import "./ui/onboarding.css";
       if (accountSaveEditBtn) accountSaveEditBtn.addEventListener('click', saveCurrentUserProfile);
       if (accountCancelEditBtn) accountCancelEditBtn.addEventListener('click', cancelAccountEditing);
       logoutButton.addEventListener('click', logoutCurrentUser);
+      weightUnitSelect?.addEventListener('change', () => localStorage.setItem('gymJournal:weightUnit', weightUnitSelect.value));
+      defaultPeriodSelect?.addEventListener('change', () => { localStorage.setItem('gymJournal:defaultPeriod', defaultPeriodSelect.value); activeRangeTraining = defaultPeriodSelect.value; setActiveButtons(rangeFilterDiv, activeRangeTraining); renderOverallChartAndExercisesList(); });
+      restDurationSelect?.addEventListener('change', () => { localStorage.setItem('gymJournal:restDuration', restDurationSelect.value); });
 
       createModalOverlay.addEventListener('click', closeCreateModal);
       createModalClose.addEventListener('click', closeCreateModal);
@@ -1695,6 +1779,8 @@ import "./ui/onboarding.css";
        },
        closeWeight: () => closeBottomSheet(featureDom.weightSheet)
       });
+
+      trainingMode = createTrainingMode({ db, auth, getExercises: () => clientSideExercisesMap, getPreviousSession: () => [], calculateMetrics: calculateWorkoutMetrics, onSaved: saveTrainingState });
 
       // Override account deletion cleanup to include body weight entries as well.
       async function deleteUserOwnedData(uid) {
