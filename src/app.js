@@ -46,7 +46,6 @@ import "./ui/onboarding.css";
       const accountSaveEditBtn = document.getElementById("accountSaveEditBtn");
       const accountCancelEditBtn = document.getElementById("accountCancelEditBtn");
       const accountResetPasswordBtn = document.getElementById("accountResetPasswordBtn");
-      const replayTutorialButton = document.getElementById("replayTutorialButton");
       const accountDeleteBtn = document.getElementById("accountDeleteBtn");
       const logoutButton = document.getElementById("logoutButton");
 
@@ -55,6 +54,7 @@ import "./ui/onboarding.css";
       const drawer = document.getElementById("drawer");
       const overlay = document.getElementById("overlay");
       const menuAccount = document.getElementById("menuAccount");
+      const menuTutorial = document.getElementById("menuTutorial");
       const menuTraining = document.getElementById("menuTraining");
       const menuProgress = document.getElementById("menuProgress");
       const menuSets = document.getElementById("menuSets");
@@ -1465,6 +1465,7 @@ import "./ui/onboarding.css";
       menuSets.addEventListener('click', () => { activateTab('sets'); closeDrawer(); });
       menuExerciseLog.addEventListener('click', () => { closeDrawer(); openExerciseLogSheet({ returnToDrawer: true }); });
       menuAccount.addEventListener('click', openAccountSheet);
+      menuTutorial?.addEventListener('click', () => { closeDrawer(); onboarding?.replay(); });
 
       tabTraining.addEventListener('click', () => activateTab('training'));
       tabProgress.addEventListener('click', () => activateTab('progress'));
@@ -1694,7 +1695,6 @@ import "./ui/onboarding.css";
        },
        closeWeight: () => closeBottomSheet(featureDom.weightSheet)
       });
-      replayTutorialButton?.addEventListener('click', () => { closeAccountSheet(); onboarding?.replay(); });
 
       // Override account deletion cleanup to include body weight entries as well.
       async function deleteUserOwnedData(uid) {

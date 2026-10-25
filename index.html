@@ -29,16 +29,16 @@
           </button>
         </div>
         <div class="tabs">
-          <button id="tabTraining" class="tab-link active" type="button">Training</button>
-          <button id="tabProgress" class="tab-link" type="button">Progress</button>
-          <button id="tabSets" class="tab-link" type="button">Sets</button>
+          <button id="tabTraining" class="tab-link active" type="button" data-tour="nav-training">Training</button>
+          <button id="tabProgress" class="tab-link" type="button" data-tour="nav-progress">Progress</button>
+          <button id="tabSets" class="tab-link" type="button" data-tour="nav-sets">Sets</button>
         </div>
       </div>
 
       <div class="content">
         <!-- TRAINING VIEW -->
         <div id="trainingView" class="view active">
-          <div class="card">
+          <div class="card" data-tour="training-overview">
             <div class="headline">Overall Training Performance</div>
             <div id="loginHintTraining" class="login-hint" style="display: none; margin-top: 12px">
               You are not logged in. Use <b>Account</b> to log in.
@@ -52,7 +52,7 @@
                 Progress is calculated from the first and latest training day in the selected range.
               </div>
             </div>
-            <div id="rangeFilter">
+            <div id="rangeFilter" data-tour="training-period-selector">
               <button type="button" class="range-btn" data-range="day">Day</button>
               <button type="button" class="range-btn" data-range="week">Week</button>
               <button type="button" class="range-btn" data-range="month">Month</button>
@@ -85,14 +85,14 @@
             <div id="loginHintProgress" class="login-hint" style="display: none; margin-top: 12px">
               You are not logged in. Use <b>Account</b> to log in.
             </div>
-            <div id="progressRangeFilter">
+            <div id="progressRangeFilter" data-tour="progress-period-selector">
               <button type="button" class="range-btn" data-range="day">Day</button>
               <button type="button" class="range-btn" data-range="week">Week</button>
               <button type="button" class="range-btn" data-range="month">Month</button>
               <button type="button" class="range-btn" data-range="year">Year</button>
               <button type="button" class="range-btn active" data-range="max">Max</button>
             </div>
-            <div class="chart-wrap progress-controls-wrap">
+            <div class="chart-wrap progress-controls-wrap" data-tour="progress-filters">
               <div class="chart-row">
                 <label for="progressExerciseSearch" style="margin: 0; min-width: 220px">Exercise</label>
                 <div id="progressExerciseDropdown" class="exercise-dropdown">
@@ -102,10 +102,10 @@
                 <button id="showProgressChartsButton" class="link-btn accent auto-hidden-btn" type="button">Show</button>
               </div>
             </div>
-            <div class="chart-wrap" data-tour="progress-charts"><canvas id="ivPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume</div><div class="chart-info-desc">Total training volume per day, weighted by intensity.</div></div></div>
-            <div class="chart-wrap"><canvas id="e1rmPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Estimated 1RM</div><div class="chart-info-desc">Highest estimated one-rep max achieved per training day.</div></div></div>
+            <div class="chart-wrap" data-tour="progress-chart-intensity"><canvas id="ivPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume</div><div class="chart-info-desc">Total training volume per day, weighted by intensity.</div></div></div>
+            <div class="chart-wrap" data-tour="progress-chart-e1rm"><canvas id="e1rmPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Estimated 1RM</div><div class="chart-info-desc">Highest estimated one-rep max achieved per training day.</div></div></div>
             <div class="chart-wrap"><canvas id="maxWeightPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Max Weight</div><div class="chart-info-desc">Highest weight lifted on each training day.</div></div></div>
-            <div class="chart-wrap"><canvas id="volumePerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Training Volume</div><div class="chart-info-desc">Total volume per day calculated as weight multiplied by repetitions.</div></div></div>
+            <div class="chart-wrap" data-tour="progress-chart-volume"><canvas id="volumePerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Training Volume</div><div class="chart-info-desc">Total volume per day calculated as weight multiplied by repetitions.</div></div></div>
             <div class="chart-wrap"><canvas id="weightPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Weight</div><div class="chart-info-desc">Maximum weight used across all sets per training day.</div></div></div>
             <div class="chart-wrap"><canvas id="repsPerDayChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Repetitions</div><div class="chart-info-desc">Total number of repetitions performed per training day.</div></div></div>
           </div>
@@ -117,7 +117,7 @@
             <div class="headline">Sets</div>
             <p class="subtle">Per-set charts for exactly one selected day. Default is the latest day with entries.</p>
             <div id="loginHintSets" class="login-hint" style="display: none; margin-top: 12px">You are not logged in. Use <b>Account</b> to log in.</div>
-            <div class="card" style="margin-top: 14px">
+            <div class="card" style="margin-top: 14px" data-tour="sets-controls">
               <div class="chart-row">
                 <label for="setsExerciseSearch" style="margin: 0; min-width: 220px">Exercise</label>
                 <div id="setsExerciseDropdown" class="exercise-dropdown">
@@ -132,9 +132,9 @@
                 <button id="showSetsChartsButton" class="link-btn accent auto-hidden-btn" type="button">Show</button>
               </div>
             </div>
-            <div class="sets-meta" id="setsMetaLine" data-tour="sets-date"><span>Selected day: <b id="setsSelectedDayLabel">—</b></span><span>Latest day: <b id="setsLatestDayLabel">—</b></span></div>
-            <div class="chart-wrap" data-tour="sets-charts"><canvas id="ivPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume per Set</div><div class="chart-info-desc">Intensity-adjusted training volume for each individual set.</div></div></div>
-            <div class="chart-wrap"><canvas id="e1rmPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Estimated 1RM per Set</div><div class="chart-info-desc">Estimated one-rep max calculated for each set.</div></div></div>
+            <div class="sets-meta" id="setsMetaLine" data-tour="sets-date-selector"><span>Selected day: <b id="setsSelectedDayLabel">—</b></span><span>Latest day: <b id="setsLatestDayLabel">—</b></span></div>
+            <div class="chart-wrap" data-tour="sets-chart-intensity"><canvas id="ivPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Intensity Volume per Set</div><div class="chart-info-desc">Intensity-adjusted training volume for each individual set.</div></div></div>
+            <div class="chart-wrap" data-tour="sets-chart-e1rm"><canvas id="e1rmPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Estimated 1RM per Set</div><div class="chart-info-desc">Estimated one-rep max calculated for each set.</div></div></div>
             <div class="chart-wrap"><canvas id="maxWeightPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Weight per Set</div><div class="chart-info-desc">Weight used in each individual set on the selected day.</div></div></div>
             <div class="chart-wrap"><canvas id="volumePerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Volume per Set</div><div class="chart-info-desc">Training volume per set calculated as weight multiplied by repetitions.</div></div></div>
             <div class="chart-wrap"><canvas id="repsPerSetChart"></canvas><div class="chart-divider"></div><div class="chart-info-box"><div class="chart-info-title">Repetitions per Set</div><div class="chart-info-desc">Number of repetitions completed in each set.</div></div></div>
@@ -150,7 +150,7 @@
         <div id="onboardingStepIndicator" class="onboarding-step">1 of 5</div>
         <h2 id="onboardingTitle">Your training overview</h2>
         <p id="onboardingDescription"></p>
-        <button id="onboardingContinue" class="onboarding-continue" type="button" aria-label="Continue tutorial">→</button>
+        <div class="onboarding-actions"><button id="onboardingBack" class="onboarding-back" type="button" hidden>Back</button><button id="onboardingContinue" class="onboarding-continue" type="button" aria-label="Continue tutorial">→</button></div>
       </div>
     </div>
 
@@ -166,6 +166,7 @@
       <div class="drawer-header"><div class="drawer-title">Menu</div><button id="closeDrawerBtn" class="link-btn muted" type="button">Close</button></div>
       <div class="drawer-body"><ul class="menu-list">
         <li class="menu-item" id="menuAccount"><span>Account</span><span class="pill" id="accountPill">Login</span></li>
+        <li class="menu-item" id="menuTutorial" data-tour="menu-tutorial"><span>Tutorial</span><span class="pill">Guide</span></li>
         <li class="menu-item" id="menuTraining"><span>Training</span><span class="pill">Tab</span></li>
         <li class="menu-item" id="menuProgress"><span>Progress</span><span class="pill">Tab</span></li>
         <li class="menu-item" id="menuSets"><span>Sets</span><span class="pill">Tab</span></li>
@@ -245,7 +246,6 @@
         <button id="accountEditToggleBtn" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Edit Account</button>
         <button id="accountSaveEditBtn" class="account-action-btn accent" type="button" hidden style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--accent);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Save Account</button>
         <button id="accountCancelEditBtn" class="account-action-btn danger" type="button" hidden style="all:unset;display:none !important;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Cancel changes</button>
-        <button id="replayTutorialButton" class="account-action-btn neutral" type="button">Replay app tutorial</button>
         <button id="accountResetPasswordBtn" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Reset password</button>
         <button id="logoutButton" class="account-action-btn neutral" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--text);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;">Log out</button>
         <button id="accountDeleteBtn" class="account-action-btn danger" type="button" style="all:unset;display:block;width:100%;cursor:pointer;color:var(--danger);font-size:12px;line-height:1.45;letter-spacing:0.38px;padding:6px 0;background:transparent;border:none;box-shadow:none;text-align:left;font-weight:700;">Close account</button>
