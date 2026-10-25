@@ -20,10 +20,6 @@ import { createTrainingMode } from "./training-mode.js";
        console.error('[auth] Local persistence could not be enabled:', error);
       });
       const appShell = document.querySelector(".app");
-      setupPwa();
-      window.addEventListener('gymjournal:install-available', () => { if (installAppButton) installAppButton.hidden = false; });
-      window.addEventListener('gymjournal:installed', () => { if (installAppButton) installAppButton.hidden = true; });
-      installAppButton?.addEventListener('click', () => window.installGymJournal?.());
 
       // ============================
       // DOM Elements
@@ -57,6 +53,36 @@ import { createTrainingMode } from "./training-mode.js";
       const defaultPeriodSelect = document.getElementById('defaultPeriodSelect');
       const restDurationSelect = document.getElementById('restDurationSelect');
       const installAppButton = document.getElementById('installAppButton');
+
+// ============================
+// PWA Setup
+// ============================
+window.addEventListener(
+  "gymjournal:install-available",
+  () => {
+    if (installAppButton) {
+      installAppButton.hidden = false;
+    }
+  }
+);
+
+window.addEventListener(
+  "gymjournal:installed",
+  () => {
+    if (installAppButton) {
+      installAppButton.hidden = true;
+    }
+  }
+);
+
+if (installAppButton) {
+  installAppButton.addEventListener("click", () => {
+    window.installGymJournal?.();
+  });
+}
+
+setupPwa();
+
       const accountDeleteBtn = document.getElementById("accountDeleteBtn");
       const logoutButton = document.getElementById("logoutButton");
 
