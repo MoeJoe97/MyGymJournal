@@ -524,6 +524,19 @@ button.link-btn.saving {
   padding: 16px;
   overflow: hidden;
 }
+.progress-controls-wrap {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  z-index: 2;
+}
+#progressExerciseDropdown {
+  position: relative;
+  z-index: 3;
+}
+#progressView > .card {
+  overflow: visible;
+}
 .chart-wrap canvas {
   width: 100% !important;
   max-height: 320px;
@@ -1279,8 +1292,8 @@ button.link-btn.saving {
    20. PROGRESS SUMMARY + METRIC CARDS
    ------------------------------------------------------------ */
 .progress-summary {
-  margin: 16px 0 18px 0;
-  padding: 18px;
+  margin: 14px 0 16px 0;
+  padding: 14px 16px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
   background: linear-gradient(
@@ -1303,10 +1316,11 @@ button.link-btn.saving {
   font-weight: 700;
 }
 .progress-summary-value {
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 .progress-summary-value.pos {
   color: var(--pos);
@@ -1938,16 +1952,80 @@ button.account-action-btn.hidden {
 /* ------------------------------------------------------------
    26. RESPONSIVE
    ------------------------------------------------------------ */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   :root {
-    --gutter: 16px;
+    --gutter: 12px;
+  }
+  body {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  .app {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
   .card {
-    padding: 18px;
-    border-radius: var(--r-md);
+    padding: 14px;
+    border-radius: var(--r-sm);
   }
   .headline {
-    font-size: 18px;
+    font-size: 17px;
+  }
+  .subtle {
+    line-height: 1.4;
+  }
+  #progressRangeFilter,
+  #rangeFilter {
+    gap: 14px;
+    margin: 12px 0 14px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #progressRangeFilter::-webkit-scrollbar,
+  #rangeFilter::-webkit-scrollbar { display: none; }
+  .range-btn,
+  .link-btn,
+  .fab { min-height: 44px; }
+  .chart-row {
+    align-items: stretch;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .chart-row > label {
+    flex: 0 0 100%;
+    min-width: 0 !important;
+  }
+  .exercise-dropdown {
+    max-width: none;
+    flex: 1 1 190px;
+    min-width: 0;
+  }
+  .chart-wrap {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: var(--r-sm);
+  }
+  .chart-wrap canvas {
+    max-height: 220px;
+  }
+  .chart-info-box {
+    padding-top: 10px;
+  }
+  .chart-info-desc {
+    font-size: 12px;
+  }
+  .progress-summary {
+    padding: 12px;
+    margin: 10px 0 12px;
+  }
+  .progress-summary-desc {
+    margin-top: 5px;
+  }
+  .fab-bar {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+  .fab {
+    padding: 10px 14px;
   }
   .metric-card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1981,6 +2059,10 @@ button.account-action-btn.hidden {
 }
 
 @media (max-width: 640px) {
+  .sheet-body,
+  .modal-panel {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
   #createModal .modal-panel {
     top: 4vh;
     transform: translateX(-50%);
