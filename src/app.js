@@ -982,7 +982,7 @@ setupPwa();
       }
 
       function tsToDate(ts) { if (!ts) return null; if (typeof ts.toDate === "function") return ts.toDate(); if (typeof ts.seconds === "number") return new Date(ts.seconds * 1000); try { return new Date(ts); } catch { return null; } }
-      function getRPEForCalculation(rpeValue) { const n = parseFloat(rpeValue); return !isNaN(n) && n >= 0 && n <= 10 ? n : NaN; }
+      function getRPEForCalculation(rpeValue) { const n = parseFloat(rpeValue); return Number.isFinite(n) && n >= 0 && n <= 10 ? n : null; }
       function getLocalDayKey(date = new Date()) { const y = date.getFullYear(); const m = String(date.getMonth()+1).padStart(2,"0"); const d = String(date.getDate()).padStart(2,"0"); return `${y}-${m}-${d}`; }
       function getLocalDayBounds(date = new Date()) { return { start: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0,0,0,0), end: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23,59,59,999) }; }
       function formatDayKeyDE(dayKey) { return new Date(dayKey + "T00:00:00").toLocaleDateString("de-DE"); }
@@ -1301,19 +1301,105 @@ setupPwa();
       function addAdvancedRow(values={}){if(advancedSetRows.children.length>=6)return;const r=document.createElement('div');r.className='advanced-set-row';const label=document.createElement('div');label.className='advanced-row-label';const s=exerciseSelect();s.value=values.exercise||'';s.addEventListener('change',syncDropExercise);const fields=document.createElement('div');fields.className='advanced-row-fields';fields.innerHTML=`<input class="advanced-reps" type="number" min="1" max="1000" inputmode="numeric" placeholder="Reps" aria-label="Repetitions" value="${values.repetitions||''}"><input class="advanced-weight" type="number" min="0.01" max="10000" step="0.1" inputmode="decimal" placeholder="Weight kg" aria-label="Weight" value="${values.weight||''}"><input class="advanced-rpe" type="number" min="0" max="10" step="0.5" inputmode="decimal" placeholder="RPE" aria-label="RPE" value="${values.rpe??''}">`;const del=document.createElement('button');del.type='button';del.className='advanced-row-remove';del.textContent='Remove';del.onclick=()=>{r.remove();renumberAdvancedRows();syncDropExercise()};r.append(label,s,fields,del);advancedSetRows.appendChild(r);renumberAdvancedRows();syncDropExercise();}
       function setCreateType(type){activeCreateSetType=type;setTypeSelector.querySelectorAll('button').forEach(b=>{const on=b.dataset.setType===type;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});const adv=type!=='normal';normalSetEditor.hidden=adv;advancedSetEditor.hidden=!adv;if(adv){advancedSetRows.innerHTML='';advancedSetHelp.textContent=type==='superset'?'Add at least two exercises. All exercises are saved together.':'The first row is the main set. Add reduced-weight drop stages.';addAdvancedSetRowButton.textContent=type==='superset'?'Add Exercise':'Add Drop';addAdvancedRow();addAdvancedRow()}else advancedSetRows.innerHTML='';}
       function advancedEntries(){return [...advancedSetRows.querySelectorAll('.advanced-set-row')].map(r=>({exercise:r.querySelector('select').value,repetitions:parseInt(r.querySelector('.advanced-reps').value,10),weight:parseFloat(r.querySelector('.advanced-weight').value),rpe:parseFloat(r.querySelector('.advanced-rpe').value)}));}
-      function validEntry(e,needExercise=true){return(!needExercise||e.exercise)&&Number.isInteger(e.repetitions)&&e.repetitions>0&&e.repetitions<=1000&&Number.isFinite(e.weight)&&e.weight>0&&e.weight<=10000&&Number.isFinite(e.rpe)&&e.rpe>=0&&e.rpe<=10;}
+      function validEntry(e,needExercise=true){return(!needExercise||e.exercise)&&Number.isInteger(e.repetitions)&&e.repetitions>0&&e.repetitions<=1000&&Number.isFinite(e.weight)&&e.weight>=0&&e.weight<=10000&&(e.rpe===null||(Number.isFinite(e.rpe)&&e.rpe>=0&&e.rpe<=10));}
       // ============================
       // Workout mutations
       // ============================
       async function getNextSetNumberForDay(userId, exerciseKey, nowDate) {
-        const bounds = getLocalDayBounds(nowDate);
-        const startTs = firebase.firestore.Timestamp.fromDate(bounds.start);
-        const endTs = firebase.firestore.Timestamp.fromDate(bounds.end);
-        const snapshot = await db.collection('workouts').where('userId', '==', userId).where('exercise', '==', exerciseKey).where('timestamp', '>=', startTs).where('timestamp', '<=', endTs).get();
-        let highestSetNumber = 0; snapshot.forEach((doc) => { const candidate = Number.parseInt(doc.data().setNumber, 10); if (Number.isFinite(candidate)) highestSetNumber = Math.max(highestSetNumber, candidate); }); return highestSetNumber + 1;
+        const dayKey = getLocalDayKey(nowDate);
+        console.log("[v0] getNextSetNumberForDay", { userId, exerciseKey, dayKey });
+        const snapshot = await db.collection("workouts")
+          .where("userId", "==", userId)
+          .where("exercise", "==", exerciseKey)
+          .where("dayKey", "==", dayKey)
+          .get();
+        let highestSetNumber = 0;
+        snapshot.forEach((doc) => {
+          const candidate = Number.parseInt(doc.data().setNumber, 10);
+          if (Number.isFinite(candidate)) highestSetNumber = Math.max(highestSetNumber, candidate);
+        });
+        return highestSetNumber + 1;
       }
 
-      async function saveWorkoutEntry(){const u=auth.currentUser;if(!u){showErrorMessage('Please log in first (Account).');return}if(activeCreateSetType==='normal'&&!validateCreateRequiredValues())return;setLinkSaving(createSaveButton,true,'Save');try{let entries=[];if(activeCreateSetType==='normal'){const p=resolveCreateExerciseFromUI();entries=[{exercise:p.exerciseKey,exerciseDisplay:p.exerciseDisplay,repetitions:parseInt(createRepetitionsInput.value,10),weight:parseFloat(createWeightInput.value),rpe:getRPEForCalculation(createRpeInput.value)}];if(!validEntry(entries[0]))throw Error('Please enter valid values.')}else{const rows=advancedEntries();if(activeCreateSetType==='superset'){if(rows.length<2||rows.some(e=>!validEntry(e)))throw Error('A superset needs at least two complete exercises.');entries=rows.map(e=>({...e,exerciseDisplay:getExerciseDisplayNameFromKey(e.exercise)}))}else{if(rows.length<2||!validEntry(rows[0])||rows.slice(1).some(e=>!validEntry(e,false)))throw Error('A drop set needs a complete main set and at least one complete drop.');const ex=rows[0].exercise,name=getExerciseDisplayNameFromKey(ex);entries=rows.map(e=>({...e,exercise:ex,exerciseDisplay:name}))}}const now=new Date(), dayKey=getLocalDayKey(now), gid=activeCreateSetType==='normal'?null:groupId(activeCreateSetType), batch=db.batch(), next=new Map(), exercises=new Map();for(let i=0;i<entries.length;i++){const e=entries[i];if(!next.has(e.exercise))next.set(e.exercise,await getNextSetNumberForDay(u.uid,e.exercise,now));e.setNumber=next.get(e.exercise);next.set(e.exercise,e.setNumber+1);const m=calculateWorkoutMetrics({repetitions:e.repetitions,weight:e.weight,rpe:e.rpe}),ref=db.collection('workouts').doc();batch.set(ref,{userId:u.uid,exercise:e.exercise,exerciseDisplay:e.exerciseDisplay,repetitions:e.repetitions,weight:e.weight,setNumber:e.setNumber,dayKey,rpe:e.rpe,e1RM:m.e1RM,intensityVolume:m.intensityVolume,timestamp:firebase.firestore.Timestamp.fromDate(new Date(now.getTime()+i)),setType:activeCreateSetType,groupId:gid,groupPosition:gid?i+1:null});exercises.set(e.exercise,e.exerciseDisplay)}exercises.forEach((name,key)=>batch.set(db.collection('users').doc(u.uid).collection('exercises').doc(key),{name,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));await batch.commit();await loadExercises();await refreshWorkoutCache(u.uid);refreshAutocompleteLists();activeExerciseKey=entries[0].exercise;closeCreateModal();activateTab('progress');await syncExerciseAcrossTabs(activeExerciseKey,{forceLatestSets:true,activateProgressTab:false});renderOverallChartAndExercisesList();showSuccessMessage(`Saved ${activeCreateSetType==='normal'?entries[0].exerciseDisplay:activeCreateSetType==='superset'?'superset':'drop set'}.`)}catch(e){console.error(e);showCreateInlineMessage(e.message);showErrorMessage(e.message)}finally{setLinkSaving(createSaveButton,false,'Save')}}
+      function normalizeWorkoutNumber(value, { integer = false, min = 0, max = Infinity, optional = false } = {}) {
+        if (value === null || value === undefined || value === "") return optional ? null : null;
+        const number = Number(value);
+        if (!Number.isFinite(number) || (integer && !Number.isInteger(number)) || number < min || number > max) return optional ? null : null;
+        return number;
+      }
+
+      async function saveWorkoutEntry() {
+        const u = auth.currentUser;
+        if (!u) { showErrorMessage("Please log in first (Account)."); return; }
+        if (activeCreateSetType === "normal" && !validateCreateRequiredValues()) return;
+        setLinkSaving(createSaveButton, true, "Save");
+        try {
+          let entries = [];
+          if (activeCreateSetType === "normal") {
+            const p = resolveCreateExerciseFromUI();
+            entries = [{ exercise: p.exerciseKey, exerciseDisplay: p.exerciseDisplay, repetitions: parseInt(createRepetitionsInput.value, 10), weight: parseFloat(createWeightInput.value), rpe: getRPEForCalculation(createRpeInput.value) }];
+            if (!validEntry(entries[0])) throw Error("Please enter valid values.");
+          } else {
+            const rows = advancedEntries().map((entry) => ({ ...entry, rpe: Number.isFinite(entry.rpe) ? entry.rpe : null }));
+            if (activeCreateSetType === "superset") {
+              if (rows.length < 2 || rows.some((entry) => !validEntry(entry))) throw Error("A superset needs at least two complete exercises.");
+              entries = rows.map((entry) => ({ ...entry, exerciseDisplay: getExerciseDisplayNameFromKey(entry.exercise) }));
+            } else {
+              if (rows.length < 2 || !validEntry(rows[0]) || rows.slice(1).some((entry) => !validEntry(entry, false))) throw Error("A drop set needs a complete main set and at least one complete drop.");
+              const exercise = rows[0].exercise;
+              const name = getExerciseDisplayNameFromKey(exercise);
+              entries = rows.map((entry) => ({ ...entry, exercise, exerciseDisplay: name }));
+            }
+          }
+          const now = new Date();
+          const dayKey = getLocalDayKey(now);
+          const groupIdValue = activeCreateSetType === "normal" ? null : groupId(activeCreateSetType);
+          const batch = db.batch();
+          const next = new Map();
+          const exercises = new Map();
+          let workoutDocumentCount = 0;
+          for (let i = 0; i < entries.length; i += 1) {
+            const entry = entries[i];
+            if (!next.has(entry.exercise)) {
+              next.set(entry.exercise, await getNextSetNumberForDay(u.uid, entry.exercise, now));
+            }
+            const setNumber = normalizeWorkoutNumber(next.get(entry.exercise), { integer: true, min: 1 });
+            const repetitions = normalizeWorkoutNumber(entry.repetitions, { integer: true, min: 1, max: 1000 });
+            const weight = normalizeWorkoutNumber(entry.weight, { min: 0, max: 10000 });
+            const rpe = normalizeWorkoutNumber(entry.rpe, { min: 0, max: 10, optional: true });
+            if (repetitions === null || weight === null || setNumber === null || (entry.rpe !== null && rpe === null)) throw Error("Please enter valid values.");
+            next.set(entry.exercise, setNumber + 1);
+            const metrics = calculateWorkoutMetrics({ repetitions, weight, rpe });
+            const e1RM = normalizeWorkoutNumber(metrics.e1RM, { min: 0, optional: true });
+            const intensityVolume = normalizeWorkoutNumber(metrics.intensityVolume, { min: 0, optional: true });
+            const ref = db.collection("workouts").doc();
+            batch.set(ref, { userId: u.uid, exercise: entry.exercise, exerciseDisplay: entry.exerciseDisplay, repetitions, weight, setNumber, dayKey, rpe, e1RM, intensityVolume, timestamp: firebase.firestore.Timestamp.fromDate(new Date(now.getTime() + i)), setType: activeCreateSetType, groupId: groupIdValue, groupPosition: groupIdValue ? i + 1 : null });
+            workoutDocumentCount += 1;
+            exercises.set(entry.exercise, entry.exerciseDisplay);
+          }
+          exercises.forEach((name, key) => batch.set(db.collection("users").doc(u.uid).collection("exercises").doc(key), { name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }));
+          console.log("[v0] commit workout batch", { workoutDocumentCount, exerciseDocumentCount: exercises.size, setType: activeCreateSetType });
+          await batch.commit();
+          await loadExercises();
+          await refreshWorkoutCache(u.uid);
+          refreshAutocompleteLists();
+          activeExerciseKey = entries[0].exercise;
+          closeCreateModal();
+          activateTab("progress");
+          await syncExerciseAcrossTabs(activeExerciseKey, { forceLatestSets: true, activateProgressTab: false });
+          renderOverallChartAndExercisesList();
+          showSuccessMessage(`Saved ${activeCreateSetType === "normal" ? entries[0].exerciseDisplay : activeCreateSetType === "superset" ? "superset" : "drop set"}.`);
+        } catch (error) {
+          console.error("[v0] workout save failed", error);
+          console.error({ errorCode: error?.code || null, errorMessage: error?.message || String(error), operationName: "saveWorkoutEntry", authenticatedUserId: auth.currentUser?.uid || null });
+          const message = error?.code === "permission-denied" ? "Workout could not be saved because database access was denied. Please reload the app and try again." : (error?.message || "The workout could not be saved.");
+          showCreateInlineMessage(message);
+          showErrorMessage(message);
+        } finally {
+          setLinkSaving(createSaveButton, false, "Save");
+        }
+      }
+
       function openCreateModal() { if (!auth.currentUser) { showErrorMessage('Please log in first (Account).'); return; } createModal.classList.add('open'); showElementForA11y(createModal); createExerciseSearch.value=''; createRepetitionsInput.value=''; createWeightInput.value=''; createRpeInput.value=''; setCreateType('normal'); clearCreateInlineMessage(); setLinkSaving(createSaveButton, false, 'Save'); setTimeout(() => createExerciseSearch.focus(), 60); }
       async function saveEditedWorkout() {
         if (!editWorkoutId || !validateEditRequiredValues()) return;
