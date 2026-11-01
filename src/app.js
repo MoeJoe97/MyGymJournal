@@ -1,6 +1,8 @@
 import { firebaseConfig } from "./config/firebase-config.js";
 import { calculateWorkoutMetrics } from "./domain/workout-metrics.js";
 import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
+import { createOnboarding } from "./ui/onboarding.js";
+import "./ui/onboarding.css";
 
 // ============================
       // Firebase Config + Init
@@ -8,6 +10,12 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
+
+      // Set Firebase compat persistence before any sign-in call so sessions survive
+      // browser restarts without manually storing credentials or tokens.
+      const authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
+       console.error('[auth] Local persistence could not be enabled:', error);
+      });
       const appShell = document.querySelector(".app");
 
       // ============================
@@ -46,6 +54,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       const drawer = document.getElementById("drawer");
       const overlay = document.getElementById("overlay");
       const menuAccount = document.getElementById("menuAccount");
+      const menuTutorial = document.getElementById("menuTutorial");
       const menuTraining = document.getElementById("menuTraining");
       const menuProgress = document.getElementById("menuProgress");
       const menuSets = document.getElementById("menuSets");
@@ -161,6 +170,8 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       let activeCreateSetType='normal';
       let authMode = "login";
       let lastHapticIndex = null;
+      let progressChartObserver = null;
+      const chartTouchBindings = new WeakSet();
       let pendingVerificationEmail = "";
       let pendingVerificationPassword = "";
       let isRegisteringAccount = false;
@@ -670,7 +681,70 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
        return currentUserProfile;
       }
       function isMobileView() { return window.innerWidth <= 640; }
-      function vibrateTick() { if (isMobileView() && navigator.vibrate) navigator.vibrate(8); }
+      function vibrateTick() {
+        try {
+          if (isMobileView() && typeof navigator.vibrate === "function") navigator.vibrate(8);
+        } catch (_) {}
+      }
+      function prefersReducedMotion() { return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false; }
+      function replayChartAnimation(chart) {
+        if (!chart || prefersReducedMotion()) {
+          chart?.update("none");
+          return;
+        }
+        chart.reset();
+        chart.update();
+      }
+      function ensureChartTouchFeedback(canvas, chart) {
+        if (!canvas || chartTouchBindings.has(canvas)) return;
+        chartTouchBindings.add(canvas);
+        let startX = 0;
+        let startY = 0;
+        let inspecting = false;
+        const inspect = (event) => {
+          const touch = event.touches?.[0];
+          if (!touch) return;
+          const distanceX = Math.abs(touch.clientX - startX);
+          const distanceY = Math.abs(touch.clientY - startY);
+          if (!inspecting && distanceY > 10 && distanceY > distanceX) return;
+          inspecting = true;
+          const currentChart = Chart.getChart(canvas);
+          if (!currentChart) return;
+          const elements = currentChart.getElementsAtEventForMode(event, "index", { intersect: false }, false);
+          if (!elements.length) return;
+          const index = elements[0].index;
+          currentChart.setActiveElements(elements);
+          currentChart.tooltip?.setActiveElements(elements, { x: touch.clientX, y: touch.clientY });
+          currentChart.update("none");
+          if (index !== lastHapticIndex) {
+            lastHapticIndex = index;
+            vibrateTick();
+          }
+        };
+        canvas.addEventListener("touchstart", (event) => {
+          const touch = event.touches?.[0];
+          if (!touch) return;
+          startX = touch.clientX;
+          startY = touch.clientY;
+          inspecting = false;
+          lastHapticIndex = null;
+        }, { passive: true });
+        canvas.addEventListener("touchmove", inspect, { passive: true });
+        canvas.addEventListener("touchend", () => {
+          inspecting = false;
+          lastHapticIndex = null;
+        }, { passive: true });
+      }
+      function ensureProgressChartObserver() {
+        if (progressChartObserver || typeof IntersectionObserver === "undefined") return;
+        progressChartObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting || entry.intersectionRatio < 0.25) return;
+            const chart = Chart.getChart(entry.target);
+            if (chart) replayChartAnimation(chart);
+          });
+        }, { threshold: [0.25] });
+      }
       function normalizeExerciseInput(input) { return String(input || "").trim().toLowerCase().replace(/\s+/g, " "); }
       function toTitleCase(text) { return String(text || "").split(" ").filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "); }
 
@@ -829,6 +903,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
         return {
           responsive: true,
           maintainAspectRatio: false,
+          animation: { duration: prefersReducedMotion() ? 0 : 650, easing: "easeOutCubic" },
           interaction: { mode: "index", intersect: false, axis: "x" },
           elements: { point: { radius: (ctx) => (ctx.active ? 5 : 0), hoverRadius: 0, hitRadius: 20, backgroundColor: "#ffffff", borderColor: "#000000", borderWidth: 2 } },
           onHover: (event, elements) => { if (!isMobileView()) return; if (!elements || !elements.length) return; const idx = elements[0].index; if (idx !== lastHapticIndex) { lastHapticIndex = idx; vibrateTick(); } },
@@ -845,7 +920,13 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
         destroyChartByCanvas(canvas);
         const options = baseChartOptions(title, yLabel, beginAtZero);
         if (tooltipCallbacks) options.plugins.tooltip = { callbacks: tooltipCallbacks };
-        chartInstances[groupKey][chartKey] = new Chart(canvas, { type: "line", data: { labels, datasets: createDataset(dataPoints) }, options });
+          chartInstances[groupKey][chartKey] = new Chart(canvas, { type: "line", data: { labels, datasets: createDataset(dataPoints) }, options });
+          const chart = chartInstances[groupKey][chartKey];
+          ensureChartTouchFeedback(canvas, chart);
+          if (groupKey === "progress") {
+            ensureProgressChartObserver();
+            progressChartObserver?.observe(canvas);
+          }
       }
 
       function tsToDate(ts) { if (!ts) return null; if (typeof ts.toDate === "function") return ts.toDate(); if (typeof ts.seconds === "number") return new Date(ts.seconds * 1000); try { return new Date(ts); } catch { return null; } }
@@ -870,7 +951,18 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
 
       function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); showElementForA11y(drawer); }
       function closeDrawer() { blurActiveElement(); drawer.classList.remove('open'); overlay.classList.remove('open'); hideElementForA11y(drawer); }
-      function activateTab(tabKey) { const t = tabKey === 'training'; const p = tabKey === 'progress'; const s = tabKey === 'sets'; tabTraining.classList.toggle('active', t); tabProgress.classList.toggle('active', p); tabSets.classList.toggle('active', s); trainingView.classList.toggle('active', t); progressView.classList.toggle('active', p); setsView.classList.toggle('active', s); }
+      function activateTab(tabKey) {
+        const t = tabKey === 'training'; const p = tabKey === 'progress'; const s = tabKey === 'sets';
+        tabTraining.classList.toggle('active', t); tabProgress.classList.toggle('active', p); tabSets.classList.toggle('active', s);
+        trainingView.classList.toggle('active', t); progressView.classList.toggle('active', p); setsView.classList.toggle('active', s);
+        if (p) requestAnimationFrame(() => {
+          progressChartObserver?.takeRecords();
+          progressView.querySelectorAll('canvas').forEach((canvas) => {
+            const chart = Chart.getChart(canvas);
+            if (chart) replayChartAnimation(chart);
+          });
+        });
+      }
       function toggleSortMenu(forceOpen = null) { if (!sortMenu) return; const willOpen = forceOpen !== null ? forceOpen : !sortMenu.classList.contains('open'); sortMenu.classList.toggle('open', willOpen); sortMenu.setAttribute('aria-hidden', String(!willOpen)); }
       function setSortMode(mode) { activeSortMode = mode; sortMenu.querySelectorAll('.sort-item').forEach((b) => b.classList.toggle('active', b.dataset.sort === mode)); renderOverallChartAndExercisesList(); }
       function closeCreateModal() { blurActiveElement(); createModal.classList.remove('open'); hideElementForA11y(createModal); }
@@ -1188,6 +1280,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       // Auth
       // ============================
       async function loginFromOverlay() {
+       await authPersistenceReady;
        const email = loginEmailOverlay.value.trim();
        const password = loginPasswordOverlay.value;
        clearAuthInlineErrors();
@@ -1289,6 +1382,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       }
 
       async function resendVerificationEmail() {
+        await authPersistenceReady;
         if (!pendingVerificationEmail || !pendingVerificationPassword) { alert('Please log in with your email and password first so the app can resend the verification email.'); return; }
         try {
           const cred = await auth.signInWithEmailAndPassword(pendingVerificationEmail, pendingVerificationPassword);
@@ -1371,6 +1465,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       menuSets.addEventListener('click', () => { activateTab('sets'); closeDrawer(); });
       menuExerciseLog.addEventListener('click', () => { closeDrawer(); openExerciseLogSheet({ returnToDrawer: true }); });
       menuAccount.addEventListener('click', openAccountSheet);
+      menuTutorial?.addEventListener('click', () => { closeDrawer(); onboarding?.replay(); });
 
       tabTraining.addEventListener('click', () => activateTab('training'));
       tabProgress.addEventListener('click', () => activateTab('progress'));
@@ -1430,13 +1525,19 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       addAdvancedSetRowButton.addEventListener('click',()=>addAdvancedRow());
       createSaveButton.addEventListener('click', saveWorkoutEntry);
       fabCreate.addEventListener('click', openCreateModal);
-      fabExerciseLog.addEventListener('click', () => openExerciseLogSheet({ returnToDrawer: false }));
+      fabExerciseLog.addEventListener('click', () => {
+        if (!auth.currentUser) { openLoginOverlay(); return; }
+        openFeatureSheet(featureDom?.weightSheet, renderFeatureWeight);
+      });
 
       function attachSheetSwipeToClose(sheetEl, closeFn) { let startY = null; sheetEl.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }); sheetEl.addEventListener('touchmove', (e) => { if (startY === null) return; const deltaY = e.touches[0].clientY - startY; if (deltaY > 80) { closeFn(); startY = null; } }); sheetEl.addEventListener('touchend', () => { startY = null; }); }
       attachSheetSwipeToClose(exerciseLogSheet, closeExerciseLogSheet);
       attachSheetSwipeToClose(accountSheet, closeAccountSheet);
 
       auth.onAuthStateChanged(async (user) => {
+       // Firebase may restore LOCAL persistence asynchronously. Wait before
+       // deciding whether the login overlay should be displayed.
+       await authPersistenceReady;
        if (user) {
         if (!user.emailVerified) {
          if (isRegisteringAccount) return;
@@ -1449,6 +1550,7 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
          return;
         }
         await syncUiForAuthenticatedUser(user);
+       if (onboarding) requestAnimationFrame(() => onboarding.start(user));
        } else {
         syncUiForLoggedOutUser();
        }
@@ -1568,6 +1670,31 @@ import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
       [featureDom.recordsSheet,featureDom.statsSheet,featureDom.weightSheet,featureDom.weightModal].forEach(el=>hideElementForA11y(el));
       if (featureDom.weightModal) { featureDom.weightModal.classList.remove('open'); featureDom.weightModal.style.display='none'; featureDom.weightModal.style.visibility='hidden'; featureDom.weightModal.style.pointerEvents='none'; }
       updateFeatureProgress();
+
+      const onboarding = createOnboarding({
+       auth,
+       navigation: async (destination) => {
+        closeDrawer();
+        if (destination === 'home') activateTab('training');
+        if (destination === 'progress') activateTab('progress');
+        if (destination === 'sets') activateTab('sets');
+        if (destination === 'progress' && activeExerciseKey) await renderProgressChartsForExercise(activeExerciseKey);
+        if (destination === 'sets' && activeExerciseKey) await renderSetsChartsForExercise(activeExerciseKey, null, true);
+       },
+       closeTransientUi: () => {
+        closeDrawer(); closeAccountSheet(); closeExerciseLogSheet();
+        closeBottomSheet(featureDom.recordsSheet); closeBottomSheet(featureDom.statsSheet); closeBottomSheet(featureDom.weightSheet);
+        closeFeatureWeightModal();
+       },
+       openCreate: () => { openCreateModal(); },
+       closeCreate: closeCreateModal,
+       openWeight: async () => {
+        if (!auth.currentUser) return;
+        await loadFeatureBodyWeights(auth.currentUser.uid);
+        openFeatureSheet(featureDom.weightSheet, renderFeatureWeight);
+       },
+       closeWeight: () => closeBottomSheet(featureDom.weightSheet)
+      });
 
       // Override account deletion cleanup to include body weight entries as well.
       async function deleteUserOwnedData(uid) {
