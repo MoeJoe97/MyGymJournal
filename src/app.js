@@ -1,3 +1,7 @@
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import "firebase/compat/firestore";
+import Chart from "chart.js/auto";
 import { firebaseConfig } from "./config/firebase-config.js";
 import { calculateWorkoutMetrics } from "./domain/workout-metrics.js";
 import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
@@ -34,17 +38,7 @@ import { createTrainingMode } from "./training-mode.js";
       const accountLoggedOutSection = document.getElementById("accountLoggedOutSection");
       const accountInfoEmail = document.getElementById("accountInfoEmail");
       const accountNicknameInput = document.getElementById("accountNicknameInput");
-      const accountStreetInput = document.getElementById("accountStreetInput");
-      const accountPostalCodeInput = document.getElementById("accountPostalCodeInput");
-      const accountCityInput = document.getElementById("accountCityInput");
-      const accountCountryInput = document.getElementById("accountCountryInput");
-      const accountBirthDateInput = document.getElementById("accountBirthDateInput");
       const accountNicknameView = document.getElementById("accountNicknameView");
-      const accountStreetView = document.getElementById("accountStreetView");
-      const accountPostalCodeView = document.getElementById("accountPostalCodeView");
-      const accountCityView = document.getElementById("accountCityView");
-      const accountCountryView = document.getElementById("accountCountryView");
-      const accountBirthDateView = document.getElementById("accountBirthDateView");
       const accountEditToggleBtn = document.getElementById("accountEditToggleBtn");
       const accountSaveEditBtn = document.getElementById("accountSaveEditBtn");
       const accountCancelEditBtn = document.getElementById("accountCancelEditBtn");
@@ -426,6 +420,7 @@ setupPwa();
         if (element.classList) element.classList.toggle('empty', normalized === '—');
       }
 
+      /* Obsolete profile fields are removed on the next minimized profile save. */
       function formatBirthDateForDisplay(value) {
         const normalized = normalizeBirthDateForInput(value);
         if (!normalized) return '—';
@@ -437,11 +432,6 @@ setupPwa();
       function syncAccountViewModeFields(profile, user = auth.currentUser) {
         setAccountInfoValue(accountInfoEmail, user?.email || profile?.email || '—');
         setAccountInfoValue(accountNicknameView, profile?.nickname || '');
-        setAccountInfoValue(accountStreetView, profile?.street || profile?.address || '');
-        setAccountInfoValue(accountPostalCodeView, profile?.postalCode || '');
-        setAccountInfoValue(accountCityView, profile?.city || '');
-        setAccountInfoValue(accountCountryView, profile?.country || '');
-        setAccountInfoValue(accountBirthDateView, formatBirthDateForDisplay(profile?.birthDate));
       }
 
       function normalizeBirthDateForInput(value) {
@@ -459,11 +449,6 @@ setupPwa();
       function populateAccountForm(profile, user = auth.currentUser) {
        setAccountInfoValue(accountInfoEmail, user?.email || profile?.email || "—");
        if (accountNicknameInput) accountNicknameInput.value = profile?.nickname || "";
-       if (accountStreetInput) accountStreetInput.value = profile?.street || profile?.address || "";
-       if (accountPostalCodeInput) accountPostalCodeInput.value = profile?.postalCode || "";
-       if (accountCityInput) accountCityInput.value = profile?.city || "";
-       if (accountCountryInput) accountCountryInput.value = profile?.country || "";
-       if (accountBirthDateInput) accountBirthDateInput.value = normalizeBirthDateForInput(profile?.birthDate);
        syncAccountViewModeFields(profile, user);
       }
       function blurActiveElement() {
@@ -623,6 +608,7 @@ setupPwa();
         showDeletionSuccessAfterLogout = true;
         ignoreNextLoggedOutSync = true;
         await user.delete();
+        clearMyGymJournalLocalData(user.uid);
         closeCloseAccountOverlay();
        } catch (error) {
         console.error('Delete account error:', error);
@@ -644,11 +630,6 @@ setupPwa();
        isAccountEditMode = !!enabled;
        const fieldPairs = [
         [accountNicknameInput, accountNicknameView],
-        [accountStreetInput, accountStreetView],
-        [accountPostalCodeInput, accountPostalCodeView],
-        [accountCityInput, accountCityView],
-        [accountCountryInput, accountCountryView],
-        [accountBirthDateInput, accountBirthDateView],
        ];
        fieldPairs.forEach(([input, view]) => {
         if (input) {
@@ -689,11 +670,6 @@ setupPwa();
        }
        const fieldPairs = [
         [accountNicknameInput, accountNicknameView],
-        [accountStreetInput, accountStreetView],
-        [accountPostalCodeInput, accountPostalCodeView],
-        [accountCityInput, accountCityView],
-        [accountCountryInput, accountCountryView],
-        [accountBirthDateInput, accountBirthDateView],
        ];
        fieldPairs.forEach(([input, view]) => {
         if (input) { input.disabled = true; input.style.display = 'none'; }
@@ -1221,17 +1197,11 @@ setupPwa();
         return;
        }
        const nickname = (accountNicknameInput?.value || '').trim();
-       const street = (accountStreetInput?.value || '').trim();
-       const postalCode = (accountPostalCodeInput?.value || '').trim();
-       const city = (accountCityInput?.value || '').trim();
-       const country = (accountCountryInput?.value || '').trim();
-       const birthDate = (accountBirthDateInput?.value || '').trim();
        if (!nickname) {
         showErrorMessage('Please enter a nickname.');
         accountNicknameInput?.focus();
         return;
        }
-       const combinedAddress = [street, postalCode, city, country].filter(Boolean).join(', ');
        const saveBtnText = accountSaveEditBtn ? (accountSaveEditBtn.dataset.originalText || accountSaveEditBtn.textContent || 'Save Account') : 'Save Account';
        if (accountSaveEditBtn) {
         accountSaveEditBtn.dataset.originalText = saveBtnText;
@@ -1243,12 +1213,12 @@ setupPwa();
         const payload = {
          nickname,
          email: user.email || '',
-         street,
-         postalCode,
-         city,
-         country,
-         address: combinedAddress,
-         birthDate,
+         address: firebase.firestore.FieldValue.delete(),
+         street: firebase.firestore.FieldValue.delete(),
+         postalCode: firebase.firestore.FieldValue.delete(),
+         city: firebase.firestore.FieldValue.delete(),
+         country: firebase.firestore.FieldValue.delete(),
+         birthDate: firebase.firestore.FieldValue.delete(),
          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         };
         await db.collection('users').doc(user.uid).set(payload, { merge: true });
@@ -1307,7 +1277,7 @@ setupPwa();
       // ============================
       async function getNextSetNumberForDay(userId, exerciseKey, nowDate) {
         const dayKey = getLocalDayKey(nowDate);
-        console.log("[v0] getNextSetNumberForDay", { userId, exerciseKey, dayKey });
+        if (import.meta.env.DEV) console.log("[v0] getNextSetNumberForDay", { dayKey });
         const snapshot = await db.collection("workouts")
           .where("userId", "==", userId)
           .where("exercise", "==", exerciseKey)
@@ -1454,7 +1424,7 @@ setupPwa();
         const reps = Number(set.repetitions), weight = Number(set.weight), rpe = 0;
         const metrics = calculateWorkoutMetrics({ repetitions: reps, weight, rpe });
         const ref = db.collection('workouts').doc();
-        await ref.set({ userId: auth.currentUser.uid, exercise: state.exercise, exerciseDisplay: getExerciseDisplayNameFromKey(state.exercise), repetitions: reps, weight, rpe, e1RM: metrics.e1RM, intensityVolume: metrics.intensityVolume, setNumber: String(state.sets.indexOf(set) + 1), dayKey: state.date, timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${state.date}T12:00:00`)), setType: 'normal', trainingMode: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await ref.set({ userId: auth.currentUser.uid, exercise: state.exercise, exerciseDisplay: getExerciseDisplayNameFromKey(state.exercise), repetitions: reps, weight, rpe, e1RM: metrics.e1RM, intensityVolume: metrics.intensityVolume, setNumber: await getNextSetNumberForDay(auth.currentUser.uid, state.exercise, new Date(`${state.date}T12:00:00`)), dayKey: state.date, timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${state.date}T12:00:00`)), setType: 'normal', groupId: null, groupPosition: null, trainingMode: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         set.firestoreId = ref.id;
        }
        await refreshWorkoutCache(auth.currentUser.uid);
@@ -1545,12 +1515,6 @@ setupPwa();
         await db.collection('users').doc(cred.user.uid).set({
          nickname,
          email,
-         address: '',
-         street: '',
-         postalCode: '',
-         city: '',
-         country: '',
-         birthDate: '',
          admin: false,
          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
@@ -1607,7 +1571,7 @@ setupPwa();
           const userRef = db.collection('users').doc(user.uid);
           const snap = await userRef.get();
           if (!snap.exists) {
-            await userRef.set({ admin: false, nickname: user.displayName || '', email: user.email || '', address: '', street: '', postalCode: '', city: '', country: '', birthDate: '', createdAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            await userRef.set({ admin: false, nickname: user.displayName || '', email: user.email || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
           }
         } catch (err) { console.error('User doc creation failed', err); }
 
@@ -1672,6 +1636,8 @@ setupPwa();
       closeExerciseLogBtn.addEventListener('click', closeExerciseLogSheet);
       closeAccountSheetBtn.addEventListener('click', closeAccountSheet);
       accountResetPasswordBtn.addEventListener('click', sendPasswordResetForCurrentUser);
+      document.getElementById('exportDataButton')?.addEventListener('click', exportCurrentUserData);
+      document.getElementById('clearLocalDataButton')?.addEventListener('click', clearLocalDataForCurrentUser);
       accountDeleteBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeCurrentAccount(); });
       if (accountEditToggleBtn) accountEditToggleBtn.addEventListener('click', handleAccountEditToggle);
       if (accountSaveEditBtn) accountSaveEditBtn.addEventListener('click', saveCurrentUserProfile);
@@ -1895,6 +1861,32 @@ setupPwa();
       });
 
       trainingMode = createTrainingMode({ db, auth, getExercises: () => clientSideExercisesMap, getPreviousSession: () => [], calculateMetrics: calculateWorkoutMetrics, onSaved: saveTrainingState });
+
+      function getMyGymJournalLocalStorageKeys(uid) {
+       return ['gymJournal:weightUnit','gymJournal:defaultPeriod','gymJournal:restDuration',`gymJournal:trainingDraft:${uid}`,`gymJournal:onboardingCompleted:${uid}`];
+      }
+      function clearMyGymJournalLocalData(uid) { getMyGymJournalLocalStorageKeys(uid).forEach((key) => localStorage.removeItem(key)); }
+      function toPortableValue(value) {
+       if (value && typeof value.toDate === 'function') return value.toDate().toISOString();
+       if (Array.isArray(value)) return value.map(toPortableValue);
+       if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, toPortableValue(item)]));
+       return value;
+      }
+      async function exportCurrentUserData() {
+       const user = auth.currentUser;
+       if (!user) { showErrorMessage('Please log in first.'); return; }
+       try {
+        const [profileSnap, workoutsSnap, exercisesSnap, bodyWeightsSnap] = await Promise.all([
+         db.collection('users').doc(user.uid).get(),
+         db.collection('workouts').where('userId', '==', user.uid).get(),
+         db.collection('users').doc(user.uid).collection('exercises').get(),
+         db.collection('users').doc(user.uid).collection('bodyWeights').get(),
+        ]);
+        const data = { schemaVersion: 1, exportedAt: new Date().toISOString(), profile: toPortableValue(profileSnap.data() || {}), workouts: workoutsSnap.docs.map((doc) => ({ id: doc.id, ...toPortableValue(doc.data()) })), exercises: exercisesSnap.docs.map((doc) => ({ id: doc.id, ...toPortableValue(doc.data()) })), bodyWeights: bodyWeightsSnap.docs.map((doc) => ({ id: doc.id, ...toPortableValue(doc.data()) })), localPreferences: Object.fromEntries(['gymJournal:weightUnit','gymJournal:defaultPeriod','gymJournal:restDuration',`gymJournal:trainingDraft:${user.uid}`,`gymJournal:onboardingCompleted:${user.uid}`].map((key) => [key, localStorage.getItem(key)])) };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `mygymjournal-data-${new Date().toISOString().slice(0,10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0); showSuccessMessage('Your data export was downloaded.');
+       } catch (error) { console.error('[privacy] export failed', error?.code || 'unknown'); showErrorMessage('Could not export your data. Please try again.'); }
+      }
+      function clearLocalDataForCurrentUser() { const uid = auth.currentUser?.uid; if (!uid) return; if (window.confirm('Clear MyGymJournal drafts and preferences from this device?')) { clearMyGymJournalLocalData(uid); openAccountSheet(); showSuccessMessage('Local MyGymJournal data cleared.'); } }
 
       // Override account deletion cleanup to include body weight entries as well.
       async function deleteUserOwnedData(uid) {
