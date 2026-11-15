@@ -1,4 +1,6 @@
 {
+  "id": "/",
+  "lang": "en",
   "name": "MyGymJournal",
   "short_name": "Gym Journal",
   "description": "Track workouts, charts, personal records, and training progress.",
