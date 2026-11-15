@@ -4,6 +4,7 @@ import "firebase/compat/firestore";
 import Chart from "chart.js/auto";
 import { firebaseConfig } from "./config/firebase-config.js";
 import { calculateWorkoutMetrics } from "./domain/workout-metrics.js";
+import { buildMissingProfile } from "./domain/profile-fallback.js";
 import { showSuccessMessage, showErrorMessage } from "./ui/toast.js";
 import { createOnboarding } from "./ui/onboarding.js";
 import "./ui/onboarding.css";
@@ -1651,9 +1652,17 @@ setupPwa();
         try {
           const userRef = db.collection('users').doc(user.uid);
           const snap = await userRef.get();
-          if (!snap.exists) {
-            await userRef.set({ admin: false, nickname: user.displayName || '', email: user.email || '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-          }
+          await db.runTransaction(async (transaction) => {
+            const profileSnapshot = await transaction.get(userRef);
+            const profile = buildMissingProfile(profileSnapshot.exists ? profileSnapshot.data() : null, user);
+            if (profile) {
+              transaction.set(userRef, {
+                ...profile,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              });
+            }
+          });
         } catch (err) { console.error('User doc creation failed', err); }
 
         await loadCurrentUserProfile();
