@@ -78,7 +78,7 @@ if (installAppButton) {
 setupPwa();
 
       const accountDeleteBtn = document.getElementById("accountDeleteBtn");
-      const logoutButton = document.getElementById("logoutButton");
+      const logoutButton = document.getElementById("menuSignOut");
 
       const menuButton = document.getElementById("menuButton");
       const closeDrawerBtn = document.getElementById("closeDrawerBtn");
@@ -87,6 +87,7 @@ setupPwa();
       const menuAccount = document.getElementById("menuAccount");
       const menuTutorial = document.getElementById("menuTutorial");
       const menuTraining = document.getElementById("menuTraining");
+      const menuStartWorkout = document.getElementById("menuStartWorkout");
       const menuProgress = document.getElementById("menuProgress");
       const menuSets = document.getElementById("menuSets");
       const menuExerciseLog = document.getElementById("menuExerciseLog");
@@ -137,8 +138,10 @@ setupPwa();
       const volumePerSetChartCanvas = document.getElementById("volumePerSetChart");
       const repsPerSetChartCanvas = document.getElementById("repsPerSetChart");
 
+      const fabBar = document.getElementById("fabBar");
       const fabCreate = document.getElementById("fabCreate");
-      const fabExerciseLog = document.getElementById("fabExerciseLog");
+      const fabAddSet = document.getElementById("fabAddSet");
+      const fabFinishWorkout = document.getElementById("fabFinishWorkout");
       const startTrainingModeButton = document.getElementById('startTrainingModeButton');
       const trainingModeSheet = document.getElementById('trainingModeSheet');
       const trainingModeExercise = document.getElementById('trainingModeExercise');
@@ -965,7 +968,7 @@ setupPwa();
       function getCutoffDateForRange(rangeKey) { if (rangeKey === "max") return null; const now = new Date(); const cutoff = new Date(now); if (rangeKey === "day") cutoff.setDate(now.getDate()-1); else if (rangeKey === "week") cutoff.setDate(now.getDate()-7); else if (rangeKey === "month") cutoff.setMonth(now.getMonth()-1); else if (rangeKey === "year") cutoff.setFullYear(now.getFullYear()-1); return cutoff; }
       function filterByRange(items, rangeKey) { const cutoff = getCutoffDateForRange(rangeKey); return cutoff ? items.filter((x) => x.timestamp >= cutoff) : items; }
       function setActiveButtons(containerDiv, rangeKey) { if (!containerDiv) return; containerDiv.querySelectorAll('.range-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.range === rangeKey)); }
-      function setLinkSaving(buttonEl, isSaving, originalText) { if (!buttonEl) return; if (!buttonEl.dataset.originalText) buttonEl.dataset.originalText = originalText || buttonEl.textContent || 'Save'; if (isSaving) { buttonEl.textContent = 'Saving...'; buttonEl.classList.add('saving'); buttonEl.classList.remove('accent'); } else { buttonEl.textContent = buttonEl.dataset.originalText; buttonEl.classList.remove('saving'); buttonEl.classList.add('accent'); } }
+      function setLinkSaving(buttonEl, isSaving, originalText) { if (!buttonEl) return; if (!buttonEl.dataset.originalText) buttonEl.dataset.originalText = originalText || buttonEl.textContent || 'Save'; buttonEl.disabled = Boolean(isSaving); if (isSaving) { buttonEl.textContent = 'Saving...'; buttonEl.classList.add('saving'); buttonEl.classList.remove('accent'); } else { buttonEl.textContent = buttonEl.dataset.originalText; buttonEl.classList.remove('saving'); buttonEl.classList.add('accent'); } }
       function getExerciseDisplayName(exerciseKey, allItems) { for (let i = allItems.length - 1; i >= 0; i--) { if (allItems[i].exerciseDisplay) return allItems[i].exerciseDisplay; } return clientSideExercisesMap.get(exerciseKey) || exerciseKey; }
       function uniqueSortedDayKeys(items) { const set = new Set(); items.forEach((x) => set.add(getLocalDayKey(x.timestamp))); return Array.from(set).sort(); }
       function buildDailySeries(items, reducerFn) { const dayMap = new Map(); items.forEach((item) => reducerFn(dayMap, getLocalDayKey(item.timestamp), item)); const sortedDays = Array.from(dayMap.keys()).sort(); return { labels: sortedDays.map((day) => new Date(`${day}T12:00:00`).toLocaleDateString('de-DE')), dataPoints: sortedDays.map((day) => parseFloat((dayMap.get(day) || 0).toFixed(2))), sortedDays }; }
@@ -977,12 +980,55 @@ setupPwa();
       function populateSetsDaySelect(allItems, preferredDayKey = null) { setsDaySelect.innerHTML = ''; const dayKeys = uniqueSortedDayKeys(allItems); if (!dayKeys.length) { const opt = document.createElement('option'); opt.value=''; opt.textContent='— No days —'; setsDaySelect.appendChild(opt); return { dayKeys, latestDayKey: null }; } dayKeys.forEach((dayKey) => { const opt = document.createElement('option'); opt.value=dayKey; opt.textContent=formatDayKeyDE(dayKey); setsDaySelect.appendChild(opt); }); const latestDayKey = dayKeys[dayKeys.length - 1]; setsDaySelect.value = preferredDayKey && dayKeys.includes(preferredDayKey) ? preferredDayKey : latestDayKey; return { dayKeys, latestDayKey }; }
       function getItemsForDay(allItems, dayKey) { return allItems.filter((item) => getLocalDayKey(item.timestamp) === dayKey); }
 
-      function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); showElementForA11y(drawer); }
-      function closeDrawer() { blurActiveElement(); drawer.classList.remove('open'); overlay.classList.remove('open'); hideElementForA11y(drawer); }
+      let drawerPreviousFocus = null;
+      let previousBodyOverflow = '';
+      function openDrawer() {
+        if (drawer.classList.contains('open')) return;
+        drawerPreviousFocus = menuButton;
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+        showElementForA11y(drawer);
+        menuButton.setAttribute('aria-expanded', 'true');
+        menuButton.setAttribute('aria-label', 'Close menu');
+        requestAnimationFrame(() => (drawer.querySelector('.menu-item') || closeDrawerBtn).focus());
+      }
+      function closeDrawer() {
+        if (!drawer.classList.contains('open')) return;
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = previousBodyOverflow;
+        hideElementForA11y(drawer);
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-label', 'Open menu');
+        const restoreTarget = drawerPreviousFocus?.isConnected ? drawerPreviousFocus : menuButton;
+        drawerPreviousFocus = null;
+        requestAnimationFrame(() => restoreTarget.focus());
+      }
+      function updateContextualActions() {
+        const trainingVisible = trainingView.classList.contains('active') && Boolean(auth.currentUser);
+        const workoutActive = Boolean(trainingMode?.state.active);
+        fabBar.hidden = !trainingVisible || Boolean(document.querySelector('.modal.open, .sheet.open'));
+        fabCreate.hidden = workoutActive;
+        fabAddSet.hidden = !workoutActive;
+        fabFinishWorkout.hidden = !workoutActive;
+      }
+      function updateMenuCurrent() {
+        const activeView = trainingView.classList.contains('active') ? 'training' : progressView.classList.contains('active') ? 'progress' : 'sets';
+        [[menuTraining, 'training'], [menuProgress, 'progress'], [menuSets, 'sets']].forEach(([item, key]) => {
+          if (activeView === key) item.setAttribute('aria-current', 'page');
+          else item.removeAttribute('aria-current');
+        });
+      }
       function activateTab(tabKey) {
         const t = tabKey === 'training'; const p = tabKey === 'progress'; const s = tabKey === 'sets';
         tabTraining.classList.toggle('active', t); tabProgress.classList.toggle('active', p); tabSets.classList.toggle('active', s);
         trainingView.classList.toggle('active', t); progressView.classList.toggle('active', p); setsView.classList.toggle('active', s);
+        updateMenuCurrent();
+        updateContextualActions();
         if (p) requestAnimationFrame(() => {
           progressChartObserver?.takeRecords();
           progressView.querySelectorAll('canvas').forEach((canvas) => {
@@ -993,9 +1039,19 @@ setupPwa();
       }
       function toggleSortMenu(forceOpen = null) { if (!sortMenu) return; const willOpen = forceOpen !== null ? forceOpen : !sortMenu.classList.contains('open'); sortMenu.classList.toggle('open', willOpen); sortMenu.setAttribute('aria-hidden', String(!willOpen)); }
       function setSortMode(mode) { activeSortMode = mode; sortMenu.querySelectorAll('.sort-item').forEach((b) => b.classList.toggle('active', b.dataset.sort === mode)); renderOverallChartAndExercisesList(); }
-      function closeCreateModal() { blurActiveElement(); createModal.classList.remove('open'); hideElementForA11y(createModal); }
-      function openBottomSheet(sheetEl, { returnToDrawer = false } = {}) { sheetEl.classList.add('open'); showElementForA11y(sheetEl); sheetEl.dataset.returnToDrawer = returnToDrawer ? 'true' : 'false'; }
-      function closeBottomSheet(sheetEl) { blurActiveElement(); const shouldReturnToDrawer = sheetEl.dataset.returnToDrawer === 'true'; sheetEl.classList.remove('open'); hideElementForA11y(sheetEl); sheetEl.dataset.returnToDrawer = 'false'; if (shouldReturnToDrawer) openDrawer(); }
+      const modalReturnFocus = new WeakMap();
+      function closeCreateModal({ restoreFocus = true } = {}) {
+        const wasOpen = createModal.classList.contains('open');
+        const target = modalReturnFocus.get(createModal);
+        blurActiveElement();
+        createModal.classList.remove('open');
+        hideElementForA11y(createModal);
+        updateContextualActions();
+        if (wasOpen && restoreFocus) requestAnimationFrame(() => (target?.isConnected && !target.closest('[inert]') && target.getClientRects().length ? target : menuButton).focus());
+      }
+      const sheetReturnFocus = new WeakMap();
+      function openBottomSheet(sheetEl, { returnToDrawer = false } = {}) { const active = document.activeElement; sheetReturnFocus.set(sheetEl, drawer.contains(active) ? menuButton : active); sheetEl.classList.add('open'); showElementForA11y(sheetEl); sheetEl.dataset.returnToDrawer = returnToDrawer ? 'true' : 'false'; updateContextualActions(); requestAnimationFrame(() => sheetEl.querySelector('button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href]')?.focus()); }
+      function closeBottomSheet(sheetEl) { const wasOpen = sheetEl.classList.contains('open'); const shouldReturnToDrawer = sheetEl.dataset.returnToDrawer === 'true'; sheetEl.classList.remove('open'); hideElementForA11y(sheetEl); sheetEl.dataset.returnToDrawer = 'false'; if (shouldReturnToDrawer) openDrawer(); else if (wasOpen) { const target = sheetReturnFocus.get(sheetEl); requestAnimationFrame(() => (target?.isConnected && !target.closest('[inert]') ? target : menuButton).focus()); } updateContextualActions(); }
       function openExerciseLogSheet({ returnToDrawer = false } = {}) { openBottomSheet(exerciseLogSheet, { returnToDrawer }); renderExerciseLog(); }
       function closeExerciseLogSheet() { closeBottomSheet(exerciseLogSheet); }
       function openAccountSheet() { closeDrawer(); forceAccountButtonsToViewMode(); setAccountEditMode(false); if (weightUnitSelect) weightUnitSelect.value = localStorage.getItem('gymJournal:weightUnit') || 'kg'; if (defaultPeriodSelect) defaultPeriodSelect.value = localStorage.getItem('gymJournal:defaultPeriod') || 'max'; if (restDurationSelect) restDurationSelect.value = localStorage.getItem('gymJournal:restDuration') || '90'; openBottomSheet(accountSheet, { returnToDrawer: false }); loadCurrentUserProfile().then(() => { forceAccountButtonsToViewMode(); setAccountEditMode(false); }).catch(console.error); }
@@ -1348,14 +1404,15 @@ setupPwa();
             exercises.set(entry.exercise, entry.exerciseDisplay);
           }
           exercises.forEach((name, key) => batch.set(db.collection("users").doc(u.uid).collection("exercises").doc(key), { name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }));
-          console.log("[v0] commit workout batch", { workoutDocumentCount, exerciseDocumentCount: exercises.size, setType: activeCreateSetType });
+          if (import.meta.env.DEV) console.log("[v0] commit workout batch", { workoutDocumentCount, exerciseDocumentCount: exercises.size, setType: activeCreateSetType });
           await batch.commit();
           await loadExercises();
           await refreshWorkoutCache(u.uid);
           refreshAutocompleteLists();
           activeExerciseKey = entries[0].exercise;
-          closeCreateModal();
+          closeCreateModal({ restoreFocus: false });
           activateTab("progress");
+          tabProgress.focus();
           await syncExerciseAcrossTabs(activeExerciseKey, { forceLatestSets: true, activateProgressTab: false });
           renderOverallChartAndExercisesList();
           showSuccessMessage(`Saved ${activeCreateSetType === "normal" ? entries[0].exerciseDisplay : activeCreateSetType === "superset" ? "superset" : "drop set"}.`);
@@ -1370,7 +1427,7 @@ setupPwa();
         }
       }
 
-      function openCreateModal() { if (!auth.currentUser) { showErrorMessage('Please log in first (Account).'); return; } createModal.classList.add('open'); showElementForA11y(createModal); createExerciseSearch.value=''; createRepetitionsInput.value=''; createWeightInput.value=''; createRpeInput.value=''; setCreateType('normal'); clearCreateInlineMessage(); setLinkSaving(createSaveButton, false, 'Save'); setTimeout(() => createExerciseSearch.focus(), 60); }
+      function openCreateModal() { if (!auth.currentUser) { showErrorMessage('Please log in first (Account).'); return; } modalReturnFocus.set(createModal, document.activeElement); createModal.classList.add('open'); showElementForA11y(createModal); updateContextualActions(); createExerciseSearch.value=''; createRepetitionsInput.value=''; createWeightInput.value=''; createRpeInput.value=''; setCreateType('normal'); clearCreateInlineMessage(); setLinkSaving(createSaveButton, false, 'Save'); setTimeout(() => createExerciseSearch.focus(), 60); }
       async function saveEditedWorkout() {
         if (!editWorkoutId || !validateEditRequiredValues()) return;
         const repetitions=Number(editRepsInput.value), weight=Number(editWeightInput.value), rpe=Number(editRpeInput.value);
@@ -1435,7 +1492,24 @@ setupPwa();
       document.addEventListener('gymjournal:timer', updateTrainingTimer);
       startTrainingModeButton?.addEventListener('click', () => { if (!auth.currentUser) { openLoginOverlay(); return; } trainingMode?.start(activeExerciseKey || ''); openBottomSheet(trainingModeSheet); if (!trainingMode.state.sets.length) trainingMode.addSet(); renderTrainingMode(trainingMode.state); });
       addTrainingSetButton?.addEventListener('click', () => { trainingMode.addSet(); renderTrainingMode(trainingMode.state); });
-      finishTrainingButton?.addEventListener('click', async () => { await trainingMode.finish(); closeBottomSheet(trainingModeSheet); showSuccessMessage('Training session saved.'); });
+      finishTrainingButton?.addEventListener('click', async () => {
+        if (!trainingMode?.state.active || finishTrainingButton.disabled) return;
+        finishTrainingButton.disabled = true;
+        finishTrainingButton.setAttribute('aria-busy', 'true');
+        finishTrainingButton.textContent = 'Saving…';
+        try {
+          await trainingMode.finish();
+          closeBottomSheet(trainingModeSheet);
+          showSuccessMessage('Training session saved.');
+        } catch (error) {
+          showErrorMessage(error?.message || 'The training session could not be saved.');
+        } finally {
+          finishTrainingButton.disabled = false;
+          finishTrainingButton.removeAttribute('aria-busy');
+          finishTrainingButton.textContent = 'Finish training';
+          updateContextualActions();
+        }
+      });
       leaveTrainingModeButton?.addEventListener('click', async () => { await trainingMode.leave(); closeBottomSheet(trainingModeSheet); });
       restTimerAddButton?.addEventListener('click', () => trainingMode?.addRest(30));
       restTimerPauseButton?.addEventListener('click', () => { trainingMode?.pause(); restTimerPauseButton.textContent = trainingMode.state.timer.paused ? 'Resume' : 'Pause'; });
@@ -1586,6 +1660,7 @@ setupPwa();
         refreshAutocompleteLists();
         renderOverallChartAndExercisesList();
         preselectDefaultExerciseAndRender();
+        updateContextualActions();
       }
       function syncUiForLoggedOutUser() {
        clearHomeMessage();
@@ -1602,6 +1677,7 @@ setupPwa();
        exercisesListUl.innerHTML=''; exerciseSearchInput.value=''; progressExerciseSearch.value=''; setsExerciseSearch.value=''; createExerciseSearch.value=''; setsDaySelect.innerHTML='<option value="">-- Select a day --</option>'; createExerciseList.innerHTML=''; progressExerciseList.innerHTML=''; setsExerciseList.innerHTML=''; clearChartsForLoggedOutState();
        closeDrawer();
        closeAccountSheet();
+       updateContextualActions();
        if (ignoreNextLoggedOutSync) {
         ignoreNextLoggedOutSync = false;
        }
@@ -1615,15 +1691,47 @@ setupPwa();
       // ============================
       // Event bindings
       // ============================
-      menuButton.addEventListener('click', openDrawer);
+      menuButton.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
       closeDrawerBtn.addEventListener('click', closeDrawer);
       overlay.addEventListener('click', closeDrawer);
+      menuStartWorkout.addEventListener('click', () => { closeDrawer(); startTrainingModeButton.click(); });
       menuTraining.addEventListener('click', () => { activateTab('training'); closeDrawer(); });
       menuProgress.addEventListener('click', () => { activateTab('progress'); closeDrawer(); });
       menuSets.addEventListener('click', () => { activateTab('sets'); closeDrawer(); });
       menuExerciseLog.addEventListener('click', () => { closeDrawer(); openExerciseLogSheet({ returnToDrawer: true }); });
       menuAccount.addEventListener('click', openAccountSheet);
       menuTutorial?.addEventListener('click', async () => { if (!auth.currentUser) { openLoginOverlay(); return; } closeDrawer(); closeAccountSheet(); closeExerciseLogSheet(); activateTab('training'); await onboarding?.replay(); });
+      document.addEventListener('keydown', (event) => {
+        const surface = drawer.classList.contains('open')
+          ? drawer
+          : document.querySelector('.modal.open')
+            || document.querySelector('.sheet.open')
+            || (verificationNoticeOverlay?.classList.contains('open') ? verificationNoticeOverlay.querySelector('.verification-panel') : null)
+            || (closeAccountOverlay?.classList.contains('open') ? closeAccountOverlay.querySelector('.close-account-panel') : null)
+            || (deletionSuccessOverlay?.classList.contains('open') ? deletionSuccessOverlay.querySelector('.deletion-success-panel') : null)
+            || (loginOverlay && !loginOverlay.classList.contains('hidden') ? loginOverlay.querySelector('.login-panel') : null);
+        if (!surface) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          if (surface === drawer) { closeDrawer(); return; }
+          if (surface === verificationNoticeOverlay?.querySelector('.verification-panel')) { closeVerificationNoticeOverlay(); return; }
+          if (surface === closeAccountOverlay?.querySelector('.close-account-panel')) { closeCloseAccountOverlay(); return; }
+          if (surface === deletionSuccessOverlay?.querySelector('.deletion-success-panel')) { closeDeletionSuccessOverlay(); return; }
+          if (surface === loginOverlay?.querySelector('.login-panel')) return;
+          const closeButton = surface.id === 'editWorkoutModal'
+            ? editCancelButton
+            : surface.querySelector('.modal-close, #createModalClose, .sheet-header button, [data-close]');
+          closeButton?.click();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+        const focusable = [...surface.querySelectorAll('button:not([disabled]):not([hidden]), a[href], input:not([disabled]):not([hidden]), select:not([disabled]):not([hidden]), textarea:not([disabled]):not([hidden]), [tabindex]:not([tabindex="-1"])')].filter((element) => element.getClientRects().length);
+        if (!focusable.length) { event.preventDefault(); surface.focus(); return; }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !surface.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !surface.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      });
 
       tabTraining.addEventListener('click', () => activateTab('training'));
       tabProgress.addEventListener('click', () => activateTab('progress'));
@@ -1688,9 +1796,36 @@ setupPwa();
       addAdvancedSetRowButton.addEventListener('click',()=>addAdvancedRow());
       createSaveButton.addEventListener('click', saveWorkoutEntry);
       fabCreate.addEventListener('click', openCreateModal);
-      fabExerciseLog.addEventListener('click', () => {
-        if (!auth.currentUser) { openLoginOverlay(); return; }
-        openFeatureSheet(featureDom?.weightSheet, renderFeatureWeight);
+      fabAddSet.addEventListener('click', async () => {
+        if (!trainingMode?.state.active || fabAddSet.disabled) return;
+        fabAddSet.disabled = true;
+        fabAddSet.setAttribute('aria-busy', 'true');
+        fabAddSet.textContent = 'Adding…';
+        try {
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+          if (trainingMode.state.active) {
+            trainingMode.addSet();
+            renderTrainingMode(trainingMode.state);
+          }
+        } finally {
+          fabAddSet.disabled = false;
+          fabAddSet.removeAttribute('aria-busy');
+          fabAddSet.textContent = 'Add set';
+        }
+      });
+      fabFinishWorkout.addEventListener('click', async () => {
+        if (!trainingMode?.state.active || fabFinishWorkout.disabled) return;
+        fabFinishWorkout.disabled = true;
+        fabFinishWorkout.textContent = 'Saving…';
+        try {
+          await trainingMode.finish();
+          closeBottomSheet(trainingModeSheet);
+          showSuccessMessage('Training session saved.');
+        } finally {
+          fabFinishWorkout.disabled = false;
+          fabFinishWorkout.textContent = 'Finish workout';
+          updateContextualActions();
+        }
       });
 
       function attachSheetSwipeToClose(sheetEl, closeFn) { let startY = null; sheetEl.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }); sheetEl.addEventListener('touchmove', (e) => { if (startY === null) return; const deltaY = e.touches[0].clientY - startY; if (deltaY > 80) { closeFn(); startY = null; } }); sheetEl.addEventListener('touchend', () => { startY = null; }); }
@@ -1805,8 +1940,8 @@ setupPwa();
 
 
       featureDom.weightList.innerHTML=''; if(!rows.length){ featureDom.weightList.innerHTML='<li class="weight-row"><div class="weight-main"><div class="weight-date">No weight entries yet.</div><div class="weight-meta">Use Enter Weight to add your first entry.</div></div></li>'; return;} rows.slice().reverse().forEach(r=>{ const li=document.createElement('li'); li.className='weight-row'; li.innerHTML=`<div class="weight-main"><div class="weight-date">${formatDayKeyDE(r.dayKey)}</div><div class="weight-meta">Body weight entry</div></div><div class="record-value-number">${fKg(r.weight,1)}</div>`; featureDom.weightList.appendChild(li); }); }
-      function openFeatureWeightModal(){ if(!auth.currentUser){ openLoginOverlay(); return; } showWeightMessage(''); featureDom.weightDate.value=getLocalDayKey(new Date()); featureDom.weightValue.value=''; featureDom.weightModal.classList.add('open'); featureDom.weightModal.style.display='block'; featureDom.weightModal.style.visibility='visible'; featureDom.weightModal.style.pointerEvents='auto'; featureDom.weightModal.style.zIndex='3600'; showElementForA11y(featureDom.weightModal); setTimeout(()=>featureDom.weightValue?.focus(),50); }
-      function closeFeatureWeightModal(){ blurActiveElement(); featureDom.weightModal.classList.remove('open'); featureDom.weightModal.style.display='none'; featureDom.weightModal.style.visibility='hidden'; featureDom.weightModal.style.pointerEvents='none'; hideElementForA11y(featureDom.weightModal); showWeightMessage(''); }
+      function openFeatureWeightModal(){ if(!auth.currentUser){ openLoginOverlay(); return; } modalReturnFocus.set(featureDom.weightModal, document.activeElement); showWeightMessage(''); featureDom.weightDate.value=getLocalDayKey(new Date()); featureDom.weightValue.value=''; featureDom.weightModal.classList.add('open'); featureDom.weightModal.style.display='block'; featureDom.weightModal.style.visibility='visible'; featureDom.weightModal.style.pointerEvents='auto'; featureDom.weightModal.style.zIndex='3600'; showElementForA11y(featureDom.weightModal); setTimeout(()=>featureDom.weightValue?.focus(),50); }
+      function closeFeatureWeightModal(){ const wasOpen=featureDom.weightModal.classList.contains('open'); const target=modalReturnFocus.get(featureDom.weightModal); blurActiveElement(); featureDom.weightModal.classList.remove('open'); featureDom.weightModal.style.display='none'; featureDom.weightModal.style.visibility='hidden'; featureDom.weightModal.style.pointerEvents='none'; hideElementForA11y(featureDom.weightModal); showWeightMessage(''); if(wasOpen) requestAnimationFrame(()=> (target?.isConnected && !target.closest('[inert]') && target.getClientRects().length ? target : menuButton).focus()); }
       async function saveFeatureWeight(){ const user=auth.currentUser; if(!user){ openLoginOverlay(); return; } const weight=Number(featureDom.weightValue.value); if(!isFinite(weight)||weight<=0){showWeightMessage('Please enter a valid weight.'); return;} const date=new Date(`${featureDom.weightDate.value||getLocalDayKey(new Date())}T12:00:00`); const dayKey=getLocalDayKey(date); try{ await db.collection('users').doc(user.uid).collection('bodyWeights').doc(dayKey).set({weight,dayKey,timestamp:firebase.firestore.Timestamp.fromDate(date),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); await loadFeatureBodyWeights(user.uid); closeFeatureWeightModal(); renderFeatureWeight(); }catch(e){ console.error('Save body weight error:',e); showWeightMessage(`Could not save weight: ${e.message}`); } }
       function openFeatureSheet(sheet, renderFn){ closeDrawer(); openBottomSheet(sheet,{returnToDrawer:false}); if(renderFn) renderFn(); }
       const originalRenderOverallChartAndExercisesList = renderOverallChartAndExercisesList;

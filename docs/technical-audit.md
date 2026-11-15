@@ -1,6 +1,6 @@
 # Technical audit
 
-**Scope:** source-level review of the repository on `audit/architecture-mobile-firebase-privacy`. No Firebase Console, production database, deployment environment, or user data was accessed. Findings are based on tracked source and configuration only.
+**Scope:** source-level review of the repository on `v0/architecture-mobile-privacy-audit`. No Firebase Console, production database, deployment environment, or user data was accessed. Findings are based on tracked source and configuration only.
 
 ## Architecture and code quality
 
@@ -35,9 +35,21 @@
 
 | Severity | Affected file/component | Observed problem and impact | Recommendation | Implemented? | Firebase Console work? |
 |---|---|---|---|---|---|
-| Medium | `index.html`, `src/styles.css` | Existing responsive styles and contextual action bar are present. Browser measurements at 320, 360, 390, 768 and 1090 px showed no document-width overflow on the logged-out screen; authenticated workout flows were not exercised. | Verify authenticated workout forms, menu/dialog behavior, touch targets and reduced-motion behavior before release. | Width pass completed; no new mobile changes in this branch. | No |
-| Medium | `index.html`, `src/app.js` | Application uses custom drawers/overlays; focus restoration and complete keyboard interaction should be tested end-to-end. | Add/maintain Escape handling, focus return, visible focus and accessible names, then browser-test the flows. | No new changes in this branch. | No |
+| Medium | `index.html`, `src/styles.css`, `tests/mobile-state-fixture.html` | The responsive app has a fixed contextual action bar; authenticated Firebase data could not be used in the available browser session. | Keep actions view/workout-specific, avoid covering sheet content, and test authenticated forms against a development-only fixture when Firebase credentials are unavailable. | Menu/action redesign completed. Fixture UI flows and no-overflow checks passed at 320, 360, 390, 768 and 1090 px. Fixture checks do not validate Firebase persistence. | No |
+| Medium | `index.html`, `src/app.js` | Application uses custom drawers, sheets and modal overlays. | Keep keyboard focus within modal surfaces, close with Escape, restore focus, expose semantic labels and respect reduced motion. | Drawer and sheet/modal semantics, Escape handling, focus movement/trapping/restoration, body-scroll lock and visible focus added. Keyboard behavior exercised in the development fixture; production Firebase flows remain manual. | No |
 | Low | chart components in `src/app.js` and `index.html` | Charts have explanatory copy, but chart data is not guaranteed to have an equivalent dynamic textual summary. | Provide a concise summary from the same real data used by each chart. | No. | No |
+
+### Follow-up implementation and verification
+
+- The previous flat menu was: Account, Tutorial, Training, Progress, Sets, Exercise Log, Personal Records, Statistics and Weight Tracking. The new menu groups these existing destinations/actions as **Training** (start/continue workout, training overview, workout history), **Progress** (progress overview, sets, personal records, statistics, weight tracking), **My Account** (profile/settings, including export/privacy/account closure), **Help** (Tutorial), and separated **Sign out**. Existing header tabs and home content remain.
+- A single floating action is shown on authenticated Training when no workout is active. Active-workout controls are contextual and the fixed bar is hidden while sheets/dialogs are open; the training sheet retains its Add Set and Finish actions. Create/finish actions expose disabled/loading states and cannot be submitted repeatedly.
+- A development-only, in-memory UI fixture is at `tests/mobile-state-fixture.html`; it is not imported by `index.html` or emitted as a production entry. It exercises profile/settings, workout creation, starting a session, adding/completing a set, finishing, history, progress/sets, records, dialogs, menu keyboard handling and responsive layout. It is simulated state only: it does not authenticate with Firebase or test Firestore writes/reads. The production app's login dialog, drawer and profile/settings sheet were opened in the browser; login-overlay removal was done only to reach the gated shell, not to impersonate an authenticated Firebase session. Menu focus, Escape, focus restoration, body scroll lock and login-dialog focus trapping were checked. The production app remained logged out, so real authenticated Firebase workflows were not verified.
+- Browser overflow checks on the fixture passed at 320, 360, 390, 768 and 1090 px. Captures were taken at 320 px (menu), 390 px (profile/settings) and 768 px (active workout). In the test fixture, the drawer is 288 px wide at 320, the profile sheet occupies the bottom portion at 390, and the active workout sheet spans the page width at 768. No horizontal overflow was observed.
+
+### Preview environment notes
+
+- In a protected Vercel Preview, requesting `manifest.webmanifest` can redirect to `vercel.com/sso-api`, which the browser reports as a CORS failure. This is an observed Deployment Protection behavior; do not add broad wildcard CORS headers to the application to work around it.
+- Firebase Authentication rejects preview-host sign-in unless the exact preview hostname is listed under **Firebase Console → Authentication → Settings → Authorized domains**. Add the intended preview host there before testing Firebase sign-in.
 
 ## Build, deployment and tests
 
