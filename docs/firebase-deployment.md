@@ -4,9 +4,10 @@ This repository's Firebase configuration does not imply that its Rules or indexe
 
 ## Install and select a project
 
-Install the Firebase CLI using the official Firebase documentation for your operating system, then authenticate:
+Install the Firebase CLI using the official Firebase documentation for your operating system (for npm-based environments, `npm install -g firebase-tools`), then authenticate and verify the CLI:
 
 ```sh
+firebase --version
 firebase login
 ```
 
@@ -23,14 +24,21 @@ Confirm the project ID with the project owner and compare it to the intended env
 
 ## Emulator and Rules tests
 
-Install repository dependencies, then start the Firestore Emulator:
+Install repository dependencies and ensure a Java runtime is available (the Firestore Emulator requires Java). The project test script starts and stops the Firestore Emulator automatically:
 
 ```sh
 npm ci
-firebase emulators:start --only firestore
+npm run test:rules
 ```
 
-Run the repository's Rules tests with the documented package script after it is configured. A successful emulator run only validates the tested Rules and fixtures; it does not deploy or establish production state.
+To inspect the emulator manually instead, start it in one terminal and run the test file in another:
+
+```sh
+firebase emulators:start --only firestore
+node --test tests/firestore-rules.test.js
+```
+
+A successful emulator run only validates the tested Rules and fixtures; it does not deploy or establish production state.
 
 ## Deploy only Rules or indexes (manual action)
 
@@ -41,7 +49,7 @@ firebase deploy --only firestore:rules
 firebase deploy --only firestore:indexes
 ```
 
-**Warning:** Deploying repository Rules through Firebase CLI overwrites the corresponding active Rules in the Firebase Console. Review the diff and current console rules before proceeding. This repository currently has no `firestore.indexes.json`; do not deploy indexes until an reviewed file exists.
+**Warning:** Deploying repository Rules through Firebase CLI overwrites the corresponding active Rules in the Firebase Console. Review the diff and current console rules before proceeding. This repository currently has no `firestore.indexes.json`; do not deploy indexes until a reviewed file exists.
 
 ## Verify and roll back
 

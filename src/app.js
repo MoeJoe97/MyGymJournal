@@ -1361,7 +1361,7 @@ setupPwa();
           showSuccessMessage(`Saved ${activeCreateSetType === "normal" ? entries[0].exerciseDisplay : activeCreateSetType === "superset" ? "superset" : "drop set"}.`);
         } catch (error) {
           console.error("[v0] workout save failed", error);
-          console.error({ errorCode: error?.code || null, errorMessage: error?.message || String(error), operationName: "saveWorkoutEntry", authenticatedUserId: auth.currentUser?.uid || null });
+          console.error({ errorCode: error?.code || null, errorMessage: error?.message || String(error), operationName: "saveWorkoutEntry" });
           const message = error?.code === "permission-denied" ? "Workout could not be saved because database access was denied. Please reload the app and try again." : (error?.message || "The workout could not be saved.");
           showCreateInlineMessage(message);
           showErrorMessage(message);

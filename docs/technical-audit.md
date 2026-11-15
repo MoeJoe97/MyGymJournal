@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|
 | High | `src/app.js` | A 1,900+ line imperative module owns Firebase setup, DOM wiring, UI state, charting, account lifecycle, Firestore reads/writes and training workflows. This makes changes hard to isolate and regression-test. | Extract domain services and UI modules in small, behavior-preserving steps, starting with Firestore services and account lifecycle. | No; audit only. | No |
 | Medium | `src/app.js`, `src/domain/workout-metrics.js` | Workout validation and calculations are only partly separated; persistence, validation and rendering remain coupled. | Move pure workout validation/normalization into tested domain functions and data access into services. | Partly: metrics are already a pure domain module. | No |
-| Low | `src/app.js` | A few debug/error logs may include operational context; one previous log included a user identifier. | Remove user identifiers and avoid logging profile/workout contents. | Yes: identifier-containing workout error log removed in this branch. | No |
+| Low | `src/app.js` | A few debug/error logs may include operational context; one previous workout error log included a user identifier. | Remove user identifiers and avoid logging profile/workout contents. | Yes: the identifier-containing workout error log now omits the UID; error code/message remain for diagnostics. | No |
 | Low | `index.html` | Repository contains lowercase `index.html`; no `Index.html` duplicate exists, avoiding case-sensitive deployment ambiguity. | Keep the lowercase Vite entry as the single canonical file. | Verified; no change needed. | No |
 
 ## Firebase and data model
@@ -35,7 +35,7 @@
 
 | Severity | Affected file/component | Observed problem and impact | Recommendation | Implemented? | Firebase Console work? |
 |---|---|---|---|---|---|
-| Medium | `index.html`, `src/styles.css` | Existing responsive styles and contextual action bar are present; a full 320/360/390/768/desktop browser pass was not completed in this source audit. | Verify layouts at specified widths, keyboard operation, labels, focus and reduced-motion behavior before release. | No new mobile changes in this branch. | No |
+| Medium | `index.html`, `src/styles.css` | Existing responsive styles and contextual action bar are present. Browser measurements at 320, 360, 390, 768 and 1090 px showed no document-width overflow on the logged-out screen; authenticated workout flows were not exercised. | Verify authenticated workout forms, menu/dialog behavior, touch targets and reduced-motion behavior before release. | Width pass completed; no new mobile changes in this branch. | No |
 | Medium | `index.html`, `src/app.js` | Application uses custom drawers/overlays; focus restoration and complete keyboard interaction should be tested end-to-end. | Add/maintain Escape handling, focus return, visible focus and accessible names, then browser-test the flows. | No new changes in this branch. | No |
 | Low | chart components in `src/app.js` and `index.html` | Charts have explanatory copy, but chart data is not guaranteed to have an equivalent dynamic textual summary. | Provide a concise summary from the same real data used by each chart. | No. | No |
 
@@ -43,7 +43,7 @@
 
 | Severity | Affected file/component | Observed problem and impact | Recommendation | Implemented? | Firebase Console work? |
 |---|---|---|---|---|---|
-| Medium | `package.json` | Project is Vite/vanilla JavaScript with Firebase compat and Chart.js; no lint, unit-test, or TypeScript scripts are configured. | Add narrow unit and Firebase Emulator Rules tests before larger refactors. | Test tooling added/recorded only if listed in package scripts; see validation below. | No |
+| Medium | `package.json`, `tests/` | Project is Vite/vanilla JavaScript with Firebase compat and Chart.js; no lint or TypeScript scripts are configured. Targeted workout-metric unit tests and Firebase Emulator Rules tests are present. | Expand tests to form validation, normalization, and export serialization as code is extracted. | Partly: metrics unit tests pass; Rules tests and `test:rules` script are added, but emulator execution is blocked because Java is unavailable. | No |
 | Medium | `firebase.json`, `.github/workflows/deploy.yml` | Firebase Hosting deployment workflow/config exist. Repository config does not prove production rules or hosting settings match. | Review GitHub workflow secrets/permissions and Firebase project selection before manually deploying. | No deployment occurred. | Yes, manual review. |
 | Low | `firebase.json` | Firestore Rules path is configured; no Firestore indexes file was present at audit time. Compound queries may require indexes when exercised. | Add indexes only when Firebase reports a required query index; export and review indexes separately. | No indexes added without evidence. | If index deployment is later chosen, yes. |
 

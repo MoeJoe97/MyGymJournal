@@ -31,13 +31,24 @@ service cloud.firestore {
         && (!('groupPosition' in data) || data.groupPosition == null || (data.groupPosition is int && data.groupPosition > 0));
     }
 
+    function validWorkoutEdit(data) {
+      return data.diff(resource.data).affectedKeys().hasOnly(['repetitions', 'weight', 'rpe', 'e1RM', 'intensityVolume', 'updatedAt'])
+        && data.repetitions is int && data.repetitions > 0 && data.repetitions <= 1000
+        && data.weight is number && data.weight >= 0 && data.weight <= 10000
+        && (!('rpe' in data) || data.rpe == null || (data.rpe is number && data.rpe >= 0 && data.rpe <= 10))
+        && (!('e1RM' in data) || (data.e1RM is number && data.e1RM >= 0))
+        && (!('intensityVolume' in data) || (data.intensityVolume is number && data.intensityVolume >= 0))
+        && data.updatedAt is timestamp;
+    }
+
     match /users/{uid} {
       allow read: if owner(uid);
       allow create: if owner(uid)
         && profileKeysValid(request.resource.data)
         && request.resource.data.admin == false
         && request.resource.data.email == request.auth.token.email
-        && validNickname(request.resource.data)
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() <= 80
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
       allow update: if owner(uid)
@@ -48,14 +59,17 @@ service cloud.firestore {
         && validNickname(request.resource.data)
         && request.resource.data.updatedAt is timestamp
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nickname', 'updatedAt', 'address', 'street', 'postalCode', 'city', 'country', 'birthDate']);
-      allow delete: if false;
+      allow delete: if owner(uid);
 
       match /exercises/{exerciseId} {
-        allow read, create, update, delete: if owner(uid)
+        allow read: if owner(uid) || admin();
+        allow create, update: if (owner(uid) || admin())
+          && request.resource.data.keys().hasOnly(['name', 'updatedAt'])
           && request.resource.data.name is string
           && request.resource.data.name.size() > 0
-          && request.resource.data.name.size() <= 160;
-        allow read: if owner(uid);
+          && request.resource.data.name.size() <= 160
+          && request.resource.data.updatedAt is timestamp;
+        allow delete: if owner(uid) || admin();
       }
       match /bodyWeights/{dayKey} {
         allow read: if owner(uid);
@@ -73,11 +87,16 @@ service cloud.firestore {
 
     match /exercises/{exerciseId} {
       allow read: if signedIn();
-      allow create, update, delete: if admin()
+      allow create, update: if admin()
         && request.resource.data.keys().hasOnly(['name', 'description', 'muscleGroup', 'equipment', 'updatedAt'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 160;
+        && request.resource.data.name.size() <= 160
+        && (!('description' in request.resource.data) || request.resource.data.description is string)
+        && (!('muscleGroup' in request.resource.data) || request.resource.data.muscleGroup is string)
+        && (!('equipment' in request.resource.data) || request.resource.data.equipment is string)
+        && (!('updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
+      allow delete: if admin();
     }
 
     match /workouts/{workoutId} {
@@ -88,7 +107,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && resource.data.userId == request.auth.uid
         && request.resource.data.userId == resource.data.userId
-        && validWorkout(request.resource.data);
+        && validWorkoutEdit(request.resource.data);
       allow delete: if signedIn() && resource.data.userId == request.auth.uid;
     }
 
