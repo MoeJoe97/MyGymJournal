@@ -1,29 +1,122 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
     function admin() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
     }
+
     function validNickname(data) {
-      return data.nickname is string && data.nickname.size() >= 2 && data.nickname.size() <= 80;
+      return data.nickname is string
+        && data.nickname.size() >= 2
+        && data.nickname.size() <= 80;
     }
+
     function profileKeysValid(data) {
-      return data.keys().hasOnly(['admin', 'nickname', 'email', 'createdAt', 'updatedAt']);
+      return data.keys().hasOnly([
+        'admin',
+        'nickname',
+        'email',
+        'createdAt',
+        'updatedAt'
+      ]);
     }
+
+    function validPersonalExerciseData(data) {
+      return data.keys().hasOnly([
+        'name',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 160
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function validBodyWeightData(data) {
+      return data.keys().hasAll([
+        'weight',
+        'dayKey',
+        'timestamp',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'weight',
+          'dayKey',
+          'timestamp',
+          'updatedAt'
+        ])
+        && data.weight is number
+        && data.weight > 0
+        && data.weight <= 1000
+        && data.dayKey is string
+        && data.dayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.timestamp is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     function validWorkout(data) {
-      return data.keys().hasAll(['userId', 'exercise', 'exerciseDisplay', 'repetitions', 'weight', 'setNumber', 'dayKey', 'timestamp'])
-        && data.keys().hasOnly(['userId', 'exercise', 'exerciseDisplay', 'repetitions', 'weight', 'setNumber', 'dayKey', 'timestamp', 'rpe', 'e1RM', 'intensityVolume', 'setType', 'groupId', 'groupPosition', 'trainingMode', 'createdAt', 'updatedAt'])
+      return data.keys().hasAll([
+        'userId',
+        'exercise',
+        'exerciseDisplay',
+        'repetitions',
+        'weight',
+        'setNumber',
+        'dayKey',
+        'timestamp'
+      ])
+        && data.keys().hasOnly([
+          'userId',
+          'exercise',
+          'exerciseDisplay',
+          'repetitions',
+          'weight',
+          'setNumber',
+          'dayKey',
+          'timestamp',
+          'rpe',
+          'e1RM',
+          'intensityVolume',
+          'setType',
+          'groupId',
+          'groupPosition',
+          'trainingMode',
+          'createdAt',
+          'updatedAt'
+        ])
         && data.userId is string
-        && data.exercise is string && data.exercise.size() > 0 && data.exercise.size() <= 160
-        && data.exerciseDisplay is string && data.exerciseDisplay.size() > 0 && data.exerciseDisplay.size() <= 160
-        && data.repetitions is int && data.repetitions > 0 && data.repetitions <= 1000
-        && data.weight is number && data.weight >= 0 && data.weight <= 10000
-        && data.setNumber is int && data.setNumber >= 1 && data.setNumber <= 1000
-        && data.dayKey is string && data.dayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.userId.size() > 0
+        && data.exercise is string
+        && data.exercise.size() > 0
+        && data.exercise.size() <= 160
+        && data.exerciseDisplay is string
+        && data.exerciseDisplay.size() > 0
+        && data.exerciseDisplay.size() <= 160
+        && data.repetitions is int
+        && data.repetitions > 0
+        && data.repetitions <= 1000
+        && data.weight is number
+        && data.weight >= 0
+        && data.weight <= 10000
+        && data.setNumber is int
+        && data.setNumber >= 1
+        && data.setNumber <= 1000
+        && data.dayKey is string
+        && data.dayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && data.timestamp is timestamp
         && (!('rpe' in data) || data.rpe == null || (data.rpe is number && data.rpe >= 0 && data.rpe <= 10))
         && (!('e1RM' in data) || data.e1RM == null || (data.e1RM is number && data.e1RM >= 0 && data.e1RM <= 100000))
@@ -34,15 +127,40 @@ service cloud.firestore {
         && (!('trainingMode' in data) || data.trainingMode is bool)
         && (!('createdAt' in data) || data.createdAt is timestamp)
         && (!('updatedAt' in data) || data.updatedAt is timestamp)
-        && (data.get('setType', 'normal') in ['superset', 'dropset']
-          ? (data.get('groupId', null) is string && data.groupId.size() > 0 && data.groupId.size() <= 120 && data.get('groupPosition', null) is int && data.groupPosition >= 1 && data.groupPosition <= 20)
-          : (data.get('groupId', null) == null && data.get('groupPosition', null) == null));
+        && (
+          (
+            data.get('setType', 'normal') in ['superset', 'dropset']
+            && data.get('groupId', null) is string
+            && data.groupId.size() > 0
+            && data.groupId.size() <= 120
+            && data.get('groupPosition', null) is int
+            && data.groupPosition >= 1
+            && data.groupPosition <= 20
+          )
+          ||
+          (
+            data.get('setType', 'normal') == 'normal'
+            && data.get('groupId', null) == null
+            && data.get('groupPosition', null) == null
+          )
+        );
     }
 
     function validWorkoutEdit(data) {
-      return data.diff(resource.data).affectedKeys().hasOnly(['repetitions', 'weight', 'rpe', 'e1RM', 'intensityVolume', 'updatedAt'])
-        && data.repetitions is int && data.repetitions > 0 && data.repetitions <= 1000
-        && data.weight is number && data.weight >= 0 && data.weight <= 10000
+      return data.diff(resource.data).affectedKeys().hasOnly([
+        'repetitions',
+        'weight',
+        'rpe',
+        'e1RM',
+        'intensityVolume',
+        'updatedAt'
+      ])
+        && data.repetitions is int
+        && data.repetitions > 0
+        && data.repetitions <= 1000
+        && data.weight is number
+        && data.weight >= 0
+        && data.weight <= 10000
         && (!('rpe' in data) || data.rpe == null || (data.rpe is number && data.rpe >= 0 && data.rpe <= 10))
         && (!('e1RM' in data) || data.e1RM == null || (data.e1RM is number && data.e1RM >= 0 && data.e1RM <= 100000))
         && (!('intensityVolume' in data) || data.intensityVolume == null || (data.intensityVolume is number && data.intensityVolume >= 0 && data.intensityVolume <= 1000000000))
@@ -51,72 +169,104 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if owner(uid);
+
       allow create: if owner(uid)
         && profileKeysValid(request.resource.data)
         && request.resource.data.admin == false
+        && request.auth.token.email != null
         && request.resource.data.email == request.auth.token.email
         && validNickname(request.resource.data)
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
+
       allow update: if owner(uid)
         && profileKeysValid(request.resource.data)
         && request.resource.data.admin == resource.data.admin
+        && request.resource.data.admin == false
         && request.resource.data.email == resource.data.email
         && request.resource.data.createdAt == resource.data.createdAt
+        && request.auth.token.email != null
+        && request.resource.data.email == request.auth.token.email
         && validNickname(request.resource.data)
         && request.resource.data.updatedAt is timestamp
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nickname', 'updatedAt', 'address', 'street', 'postalCode', 'city', 'country', 'birthDate']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nickname',
+          'updatedAt',
+          'address',
+          'street',
+          'postalCode',
+          'city',
+          'country',
+          'birthDate'
+        ]);
+
       allow delete: if owner(uid);
 
       match /exercises/{exerciseId} {
         allow read: if owner(uid) || admin();
-        allow create, update: if (owner(uid) || admin())
-          && request.resource.data.keys().hasOnly(['name', 'updatedAt'])
-          && request.resource.data.name is string
-          && request.resource.data.name.size() > 0
-          && request.resource.data.name.size() <= 160
-          && request.resource.data.updatedAt is timestamp;
+
+        allow create: if (owner(uid) || admin())
+          && validPersonalExerciseData(request.resource.data);
+
+        allow update: if (owner(uid) || admin())
+          && validPersonalExerciseData(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name',
+            'updatedAt'
+          ]);
+
         allow delete: if owner(uid) || admin();
       }
+
       match /bodyWeights/{dayKey} {
         allow read: if owner(uid);
+
         allow create, update: if owner(uid)
-          && request.resource.data.keys().hasOnly(['weight', 'dayKey', 'timestamp', 'updatedAt'])
-          && request.resource.data.weight is number
-          && request.resource.data.weight > 0
-          && request.resource.data.weight <= 1000
-          && request.resource.data.dayKey is string
-          && request.resource.data.dayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-          && request.resource.data.timestamp is timestamp
-          && request.resource.data.updatedAt is timestamp;
+          && validBodyWeightData(request.resource.data);
+
         allow delete: if owner(uid);
       }
     }
 
     match /exercises/{exerciseId} {
       allow read: if signedIn();
+
       allow create, update: if admin()
-        && request.resource.data.keys().hasOnly(['name', 'description', 'muscleGroup', 'equipment', 'updatedAt'])
+        && request.resource.data.keys().hasOnly([
+          'name',
+          'description',
+          'muscleGroup',
+          'equipment',
+          'createdAt',
+          'updatedAt'
+        ])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 160
         && (!('description' in request.resource.data) || request.resource.data.description is string)
         && (!('muscleGroup' in request.resource.data) || request.resource.data.muscleGroup is string)
         && (!('equipment' in request.resource.data) || request.resource.data.equipment is string)
+        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp)
         && (!('updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
+
       allow delete: if admin();
     }
 
     match /workouts/{workoutId} {
-      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow read: if signedIn()
+        && resource.data.userId == request.auth.uid;
+
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
         && validWorkout(request.resource.data);
+
       allow update: if signedIn()
         && resource.data.userId == request.auth.uid
         && request.resource.data.userId == resource.data.userId
         && validWorkoutEdit(request.resource.data);
-      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+
+      allow delete: if signedIn()
+        && resource.data.userId == request.auth.uid;
     }
 
     match /{document=**} {

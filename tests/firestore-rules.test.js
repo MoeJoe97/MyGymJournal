@@ -14,6 +14,7 @@ import {
   Timestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 
 const projectId = 'demo-my-gym-journal-rules';
@@ -199,6 +200,77 @@ test('workouts are owner-scoped and reject invalid data or ownership transfer', 
     e1RM: 68,
     intensityVolume: 385,
     updatedAt: serverTimestamp(),
+  }));
+});
+
+test('workout batch accepts an existing personal exercise with createdAt', async () => {
+  const db = userDb('alice');
+  const createdAt = Timestamp.fromDate(new Date('2026-01-01T12:00:00Z'));
+  const exerciseRef = doc(db, 'users/alice/exercises/front-squat');
+  const workoutRef = doc(db, 'workouts/front-squat-workout');
+  const workout = {
+    userId: 'alice', exercise: 'front-squat', exerciseDisplay: 'Front Squat',
+    repetitions: 5, weight: 80, setNumber: 1, dayKey: '2026-01-02', timestamp: Timestamp.now(),
+  };
+
+  await seed('users/alice/exercises/front-squat', {
+    name: 'Front Squat', createdAt, updatedAt: createdAt,
+  });
+
+  const batch = writeBatch(db);
+  batch.set(workoutRef, workout);
+  batch.update(exerciseRef, { name: 'Front Squat', updatedAt: serverTimestamp() });
+  await assertSucceeds(batch.commit());
+});
+
+test('workout batch accepts a new personal exercise without createdAt', async () => {
+  const db = userDb('alice');
+  const exerciseRef = doc(db, 'users/alice/exercises/pendlay-row');
+  const workoutRef = doc(db, 'workouts/pendlay-row-workout');
+  const workout = {
+    userId: 'alice', exercise: 'pendlay-row', exerciseDisplay: 'Pendlay Row',
+    repetitions: 8, weight: 50, setNumber: 1, dayKey: '2026-01-02', timestamp: Timestamp.now(),
+  };
+
+  const batch = writeBatch(db);
+  batch.set(workoutRef, workout);
+  batch.set(exerciseRef, { name: 'Pendlay Row', updatedAt: serverTimestamp() });
+  await assertSucceeds(batch.commit());
+});
+
+test('personal exercise update may preserve createdAt', async () => {
+  const createdAt = Timestamp.fromDate(new Date('2026-01-01T12:00:00Z'));
+  await seed('users/alice/exercises/front-squat', {
+    name: 'Front Squat', createdAt, updatedAt: createdAt,
+  });
+
+  await assertSucceeds(updateDoc(doc(userDb('alice'), 'users/alice/exercises/front-squat'), {
+    name: 'Paused Front Squat', updatedAt: serverTimestamp(),
+  }));
+
+  const updated = await getDoc(doc(userDb('alice'), 'users/alice/exercises/front-squat'));
+  assert.equal(updated.data().createdAt.isEqual(createdAt), true);
+});
+
+test('personal exercise update cannot modify or remove createdAt', async () => {
+  const createdAt = Timestamp.fromDate(new Date('2026-01-01T12:00:00Z'));
+  const exerciseRef = doc(userDb('alice'), 'users/alice/exercises/front-squat');
+  await seed('users/alice/exercises/front-squat', {
+    name: 'Front Squat', createdAt, updatedAt: createdAt,
+  });
+
+  await assertFails(updateDoc(exerciseRef, {
+    createdAt: Timestamp.fromDate(new Date('2026-01-02T12:00:00Z')),
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(exerciseRef, {
+    createdAt: deleteField(), updatedAt: serverTimestamp(),
+  }));
+});
+
+test('personal exercises reject unknown fields', async () => {
+  await assertFails(setDoc(doc(userDb('alice'), 'users/alice/exercises/front-squat'), {
+    name: 'Front Squat', updatedAt: serverTimestamp(), unexpected: true,
   }));
 });
 
