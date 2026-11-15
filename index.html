@@ -227,7 +227,7 @@
       <div id="passwordError" style="color: #ff4d4d; font-size: 12px; display: none; margin-top: 4px"></div>
       <input type="password" id="authPasswordConfirm" placeholder="Confirm Password" style="display: none" />
       <div id="confirmPasswordError" style="color: #ff4d4d; font-size: 12px; display: none; margin-top: 4px"></div>
-      <input type="text" id="authNickname" placeholder="Nickname" style="display: none" />
+      <input type="text" id="authNickname" placeholder="Nickname" minlength="2" maxlength="80" style="display: none" />
       <button id="resendVerificationButton" type="button" style="display: none">Resend verification email</button>
       <div class="login-actions"><button id="loginOverlayButton" class="accent-btn" type="button">Login</button><button id="registerOverlayButton" class="link-btn muted" type="button">Create account</button></div><p class="legal-links"><a href="./privacy.html">Privacy Policy</a><a href="./imprint.html">Imprint</a><a href="./terms.html">Terms of Use</a></p><p id="registrationLegalNotice" class="registration-legal" hidden>By creating an account, you acknowledge the <a href="./privacy.html">Privacy Policy</a> and <a href="./terms.html">Terms of Use</a>.</p>
     </div></div>
@@ -240,14 +240,14 @@
 
     <div id="closeAccountOverlay" class="close-account-overlay" aria-hidden="true" style="display:none;visibility:hidden;pointer-events:none;"><div class="close-account-panel" role="dialog" aria-modal="true" aria-labelledby="closeAccountTitle">
       <div class="close-account-header"><h2 id="closeAccountTitle" class="close-account-title">Delete account</h2><button id="closeAccountOverlayX" class="close-account-close" type="button" aria-label="Close">×</button></div>
-      <p class="close-account-text">Please enter your current password to confirm permanent account deletion.</p>
+      <p class="close-account-text">Please enter your current password to confirm account deletion. This client-side process is non-atomic: data cleanup happens before the sign-in account is deleted, so a failure can leave an account without its data. If an error occurs, keep the account and retry; cleanup can be repeated, but completion is shown only after both steps succeed.</p>
       <label for="closeAccountPasswordInput">Password</label><input id="closeAccountPasswordInput" type="password" placeholder="Enter current password" />
       <div id="closeAccountError" class="close-account-inline-error"></div><div class="close-account-row"><button id="cancelCloseAccountBtn" class="close-account-cancel-btn" type="button">Cancel</button><button id="confirmCloseAccountBtn" class="close-account-confirm-btn" type="button">Confirm</button></div>
     </div></div>
 
     <div id="deletionSuccessOverlay" class="deletion-success-overlay" aria-hidden="true" style="display:none;visibility:hidden;pointer-events:none;"><div class="deletion-success-panel" role="dialog" aria-modal="true" aria-labelledby="deletionSuccessTitle">
       <div class="deletion-success-header"><h2 id="deletionSuccessTitle" class="deletion-success-title">Deletion successful</h2><button id="closeDeletionSuccessBtn" class="deletion-success-close" type="button" aria-label="Close">×</button></div>
-      <p class="deletion-success-text">Your account and related workout data were deleted successfully.</p><div class="close-account-row" style="justify-content:flex-end;"><button id="deletionSuccessOkBtn" class="deletion-success-ok-btn" type="button">OK</button></div>
+      <p class="deletion-success-text">The sign-in account was deleted after this client completed its Firestore cleanup steps. This process is non-atomic and does not guarantee removal from backups or data stores outside the paths currently handled by the app.</p><div class="close-account-row" style="justify-content:flex-end;"><button id="deletionSuccessOkBtn" class="deletion-success-ok-btn" type="button">OK</button></div>
     </div></div>
 
     <div id="accountSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="accountSheetTitle" aria-hidden="true" inert tabindex="-1"><div class="sheet-handle"></div><div class="sheet-header"><div id="accountSheetTitle" class="headline">Account</div><button id="closeAccountSheetBtn" class="link-btn muted" type="button">Close</button></div><div class="sheet-body"><div class="account-shell">

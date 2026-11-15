@@ -604,21 +604,25 @@ setupPwa();
         confirmCloseAccountBtn.disabled = true;
         confirmCloseAccountBtn.textContent = 'Deleting...';
        }
+       let firestoreCleanupCompleted = false;
        try {
         const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
         await user.reauthenticateWithCredential(credential);
         await deleteUserOwnedData(user.uid);
+        firestoreCleanupCompleted = true;
         showDeletionSuccessAfterLogout = true;
         ignoreNextLoggedOutSync = true;
         await user.delete();
         clearMyGymJournalLocalData(user.uid);
         closeCloseAccountOverlay();
        } catch (error) {
+        showDeletionSuccessAfterLogout = false;
+        ignoreNextLoggedOutSync = false;
         console.error('Delete account error:', error);
         if (closeAccountError) {
          if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') closeAccountError.textContent = 'Wrong password. Please try again.';
          else if (error.code === 'auth/requires-recent-login') closeAccountError.textContent = 'Please sign in again and retry account deletion.';
-         else closeAccountError.textContent = `Could not delete account: ${error.message}`;
+         else closeAccountError.textContent = `${firestoreCleanupCompleted ? 'Firestore cleanup completed, but the sign-in account deletion failed.' : 'Deletion stopped before Firestore cleanup completed; some data may already have been removed.'} Your account deletion is not complete. Retry with your current password; cleanup is safe to retry. If it continues to fail, contact support and provide this error: ${error.message}`;
          closeAccountError.style.display = 'block';
         }
        } finally {
@@ -882,6 +886,8 @@ setupPwa();
        const confirmPassword = passwordConfirmInput.value;
        let isValid = true;
        if (authMode === "register") {
+        const nickname = nicknameInput.value.trim();
+        if (nickname.length > 80) { showLoginPasswordError("Nickname must be between 2 and 80 characters."); isValid = false; }
         if (!isValidPassword(password)) { passwordError.textContent = "Min. 8 chars, upper, lower, number, special."; passwordError.style.display = "block"; isValid = false; }
         else passwordError.style.display = "none";
         if (confirmPassword && password !== confirmPassword) { confirmPasswordError.textContent = "Passwords do not match."; confirmPasswordError.style.display = "block"; isValid = false; }
@@ -1253,8 +1259,8 @@ setupPwa();
         return;
        }
        const nickname = (accountNicknameInput?.value || '').trim();
-       if (!nickname) {
-        showErrorMessage('Please enter a nickname.');
+       if (nickname.length < 2 || nickname.length > 80) {
+        showErrorMessage('Nickname must be between 2 and 80 characters.');
         accountNicknameInput?.focus();
         return;
        }
@@ -1578,8 +1584,8 @@ setupPwa();
        if (!isValidPassword(password)) return;
        if (password !== passwordConfirmInput.value) return;
        const nickname = nicknameInput.value.trim();
-       if (!nickname || nickname.length < 2) {
-        showLoginPasswordError('Please enter a valid nickname.');
+       if (nickname.length < 2 || nickname.length > 80) {
+        showLoginPasswordError('Nickname must be between 2 and 80 characters.');
         nicknameInput?.focus();
         return;
        }
@@ -1591,6 +1597,7 @@ setupPwa();
          email,
          admin: false,
          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
         await cred.user.sendEmailVerification();
         pendingVerificationEmail = email;

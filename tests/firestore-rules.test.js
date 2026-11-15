@@ -11,6 +11,7 @@ import {
   doc,
   getDoc,
   serverTimestamp,
+  Timestamp,
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
@@ -73,6 +74,19 @@ test('owner can read own profile but another user cannot', async () => {
   }));
 });
 
+test('registration payload matches client profile creation fields', async () => {
+  const db = userDb('new-user', 'new-user@example.test');
+  const registrationPayload = {
+    admin: false,
+    nickname: 'New User',
+    email: 'new-user@example.test',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  await assertSucceeds(setDoc(doc(db, 'users/new-user'), registrationPayload));
+});
+
 test('new profiles cannot contain obsolete fields or self-assign admin', async () => {
   const db = userDb('alice');
   const base = {
@@ -84,6 +98,8 @@ test('new profiles cannot contain obsolete fields or self-assign admin', async (
   };
 
   await assertSucceeds(setDoc(doc(db, 'users/alice'), base));
+  await assertFails(setDoc(doc(db, 'users/alice'), { ...base, nickname: '' }));
+  await assertFails(setDoc(doc(db, 'users/alice'), { ...base, nickname: 'A' }));
   await assertFails(setDoc(doc(db, 'users/bob'), base));
   await assertFails(setDoc(doc(db, 'users/alice'), { ...base, admin: true }));
   await assertFails(setDoc(doc(db, 'users/alice'), { ...base, birthDate: '2000-01-01' }));
@@ -151,6 +167,20 @@ test('workouts are owner-scoped and reject invalid data or ownership transfer', 
   await assertSucceeds(getDoc(doc(alice, 'workouts/alice-workout')));
   await assertFails(getDoc(doc(bob, 'workouts/alice-workout')));
   await assertSucceeds(setDoc(doc(alice, 'workouts/new-workout'), workout));
+  const invalidWorkoutCases = [
+    ['unknown-extra-field', { ...workout, unexpected: true }],
+    ['overlong-group-id', { ...workout, setType: 'superset', groupId: 'g'.repeat(121), groupPosition: 1 }],
+    ['group-position-over-20', { ...workout, setType: 'superset', groupId: 'group-1', groupPosition: 21 }],
+    ['superset-without-group-id', { ...workout, setType: 'superset', groupPosition: 1 }],
+    ['superset-without-group-position', { ...workout, setType: 'superset', groupId: 'group-1' }],
+    ['normal-set-with-group', { ...workout, groupId: 'group-1', groupPosition: 1 }],
+    ['invalid-training-mode', { ...workout, trainingMode: 'yes' }],
+    ['invalid-created-at', { ...workout, createdAt: 'not-a-timestamp' }],
+    ['set-number-over-1000', { ...workout, setNumber: 1001 }],
+  ];
+  for (const [id, payload] of invalidWorkoutCases) {
+    await assertFails(setDoc(doc(alice, `workouts/${id}`), payload), id);
+  }
   await assertFails(setDoc(doc(alice, 'workouts/invalid-workout'), { ...workout, repetitions: 0 }));
   await assertFails(setDoc(doc(alice, 'workouts/invalid-weight'), { ...workout, weight: -1 }));
   await assertFails(setDoc(doc(alice, 'workouts/invalid-date'), { ...workout, dayKey: 'not-a-date' }));
@@ -185,11 +215,15 @@ test('custom exercises remain scoped to their owner', async () => {
   await assertFails(setDoc(doc(bob, 'users/alice/exercises/hack-squat'), { name: 'Hack Squat', updatedAt: serverTimestamp() }));
   await assertFails(updateDoc(doc(bob, 'users/alice/exercises/front-squat'), { name: 'Stolen', updatedAt: serverTimestamp() }));
   await assertFails(deleteDoc(doc(bob, 'users/alice/exercises/front-squat')));
-  await assertSucceeds(setDoc(doc(alice, 'users/alice/bodyWeights/2026-01-02'), {
+  const bodyWeightRef = doc(alice, 'users/alice/bodyWeights/2026-01-02');
+  const exactWeightPayload = {
     weight: 70,
     dayKey: '2026-01-02',
-    timestamp: serverTimestamp(),
-  }));
+    timestamp: Timestamp.fromDate(new Date('2026-01-02T12:00:00')),
+    updatedAt: serverTimestamp(),
+  };
+  await assertSucceeds(setDoc(bodyWeightRef, exactWeightPayload, { merge: true }));
+  await assertSucceeds(setDoc(bodyWeightRef, { ...exactWeightPayload, weight: 71 }, { merge: true }));
   await assertFails(getDoc(doc(bob, 'users/alice/bodyWeights/2026-01-02')));
   await assertFails(setDoc(doc(alice, 'private-data/record'), { value: 'denied' }));
   await assertFails(getDoc(doc(alice, 'private-data/record')));
